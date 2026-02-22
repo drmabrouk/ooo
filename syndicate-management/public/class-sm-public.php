@@ -120,6 +120,7 @@ class SM_Public {
     public function register_shortcodes() {
         add_shortcode('sm_login', array($this, 'shortcode_login'));
         add_shortcode('sm_admin', array($this, 'shortcode_admin_dashboard'));
+        add_shortcode('verify', array($this, 'shortcode_verify'));
         add_filter('authenticate', array($this, 'custom_authenticate'), 20, 3);
         add_filter('auth_cookie_expiration', array($this, 'custom_auth_cookie_expiration'), 10, 3);
     }
@@ -159,6 +160,12 @@ class SM_Public {
         }
 
         return $user;
+    }
+
+    public function shortcode_verify() {
+        ob_start();
+        include SM_PLUGIN_DIR . 'templates/public-verification.php';
+        return ob_get_clean();
     }
 
     public function shortcode_login() {
@@ -1044,6 +1051,102 @@ class SM_Public {
         $html = ob_get_clean();
 
         wp_send_json_success(['html' => $html]);
+    }
+
+    public function ajax_verify_document() {
+        $val = sanitize_text_field($_POST['search_value'] ?? '');
+        $type = sanitize_text_field($_POST['search_type'] ?? 'all');
+
+        if (empty($val)) wp_send_json_error('يرجى إدخال قيمة للبحث');
+
+        $member = null;
+        $results = [];
+
+        switch ($type) {
+            case 'membership':
+                $member = SM_DB::get_member_by_membership_number($val);
+                if ($member) {
+                    $results['membership'] = [
+                        'label' => 'بيانات العضوية',
+                        'name' => $member->name,
+                        'number' => $member->membership_number,
+                        'status' => $member->membership_status,
+                        'expiry' => $member->membership_expiration_date,
+                        'specialization' => $member->specialization,
+                        'grade' => $member->professional_grade
+                    ];
+                }
+                break;
+            case 'license':
+                $member = SM_DB::get_member_by_facility_number($val);
+                if ($member) {
+                    $results['license'] = [
+                        'label' => 'رخصة المنشأة',
+                        'facility_name' => $member->facility_name,
+                        'number' => $member->facility_number,
+                        'category' => $member->facility_category,
+                        'expiry' => $member->facility_license_expiration_date,
+                        'address' => $member->facility_address
+                    ];
+                }
+                break;
+            case 'practice':
+                $member = SM_DB::get_member_by_license_number($val);
+                if ($member) {
+                    $results['practice'] = [
+                        'label' => 'تصريح مزاولة المهنة',
+                        'name' => $member->name,
+                        'number' => $member->license_number,
+                        'issue_date' => $member->license_issue_date,
+                        'expiry' => $member->license_expiration_date
+                    ];
+                }
+                break;
+            default: // 'all' - National ID or Username
+                if (preg_match('/^[0-9]{14}$/', $val)) {
+                    $member = SM_DB::get_member_by_national_id($val);
+                } else {
+                    $member = SM_DB::get_member_by_username($val);
+                }
+
+                if ($member) {
+                    $results['membership'] = [
+                        'label' => 'بيانات العضوية',
+                        'name' => $member->name,
+                        'number' => $member->membership_number,
+                        'status' => $member->membership_status,
+                        'expiry' => $member->membership_expiration_date,
+                        'specialization' => $member->specialization,
+                        'grade' => $member->professional_grade
+                    ];
+                    if ($member->facility_number) {
+                        $results['license'] = [
+                            'label' => 'رخصة المنشأة',
+                            'facility_name' => $member->facility_name,
+                            'number' => $member->facility_number,
+                            'category' => $member->facility_category,
+                            'expiry' => $member->facility_license_expiration_date,
+                            'address' => $member->facility_address
+                        ];
+                    }
+                    if ($member->license_number) {
+                        $results['practice'] = [
+                            'label' => 'تصريح مزاولة المهنة',
+                            'name' => $member->name,
+                            'number' => $member->license_number,
+                            'issue_date' => $member->license_issue_date,
+                            'expiry' => $member->license_expiration_date
+                        ];
+                    }
+                }
+                break;
+        }
+
+        if (empty($results)) {
+            wp_send_json_error('عذراً، لم يتم العثور على أي بيانات مطابقة لمدخلات البحث.');
+        }
+
+        wp_send_json_success($results);
     }
 
     public function ajax_delete_service() {

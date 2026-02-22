@@ -99,6 +99,28 @@ class SM_DB {
         return $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}sm_members WHERE national_id = %s", $national_id));
     }
 
+    public static function get_member_by_membership_number($membership_number) {
+        global $wpdb;
+        return $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}sm_members WHERE membership_number = %s", $membership_number));
+    }
+
+    public static function get_member_by_license_number($license_number) {
+        global $wpdb;
+        return $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}sm_members WHERE license_number = %s", $license_number));
+    }
+
+    public static function get_member_by_facility_number($facility_number) {
+        global $wpdb;
+        return $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}sm_members WHERE facility_number = %s", $facility_number));
+    }
+
+    public static function get_member_by_username($username) {
+        $user = get_user_by('login', $username);
+        if (!$user) return null;
+        global $wpdb;
+        return $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}sm_members WHERE wp_user_id = %d", $user->ID));
+    }
+
     public static function add_member($data) {
         global $wpdb;
         $table_name = $wpdb->prefix . 'sm_members';
