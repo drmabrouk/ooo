@@ -2021,4 +2021,124 @@ class SM_Public {
 
         wp_send_json_success();
     }
+
+    // Ticketing System AJAX Handlers
+    public function ajax_get_tickets() {
+        if (!is_user_logged_in()) wp_send_json_error('Unauthorized');
+        check_ajax_referer('sm_ticket_action', 'nonce');
+        $args = array(
+            'status' => $_GET['status'] ?? '',
+            'category' => $_GET['category'] ?? '',
+            'search' => $_GET['search'] ?? ''
+        );
+        $tickets = SM_DB::get_tickets($args);
+        wp_send_json_success($tickets);
+    }
+
+    public function ajax_create_ticket() {
+        if (!is_user_logged_in()) wp_send_json_error('Unauthorized');
+        check_ajax_referer('sm_ticket_action', 'nonce');
+
+        $user = wp_get_current_user();
+        global $wpdb;
+        $member = $wpdb->get_row($wpdb->prepare("SELECT id, governorate FROM {$wpdb->prefix}sm_members WHERE wp_user_id = %d", $user->ID));
+
+        if (!$member) wp_send_json_error('Member profile not found');
+
+        $file_url = null;
+        if (!empty($_FILES['attachment']['name'])) {
+            require_once(ABSPATH . 'wp-admin/includes/file.php');
+            require_once(ABSPATH . 'wp-admin/includes/image.php');
+            require_once(ABSPATH . 'wp-admin/includes/media.php');
+            $attachment_id = media_handle_upload('attachment', 0);
+            if (!is_wp_error($attachment_id)) {
+                $file_url = wp_get_attachment_url($attachment_id);
+            }
+        }
+
+        $data = array(
+            'member_id' => $member->id,
+            'subject' => sanitize_text_field($_POST['subject']),
+            'category' => sanitize_text_field($_POST['category']),
+            'priority' => sanitize_text_field($_POST['priority'] ?? 'medium'),
+            'message' => sanitize_textarea_field($_POST['message']),
+            'province' => $member->governorate,
+            'file_url' => $file_url
+        );
+
+        $ticket_id = SM_DB::create_ticket($data);
+        if ($ticket_id) wp_send_json_success($ticket_id);
+        else wp_send_json_error('Failed to create ticket');
+    }
+
+    public function ajax_get_ticket_details() {
+        if (!is_user_logged_in()) wp_send_json_error('Unauthorized');
+        check_ajax_referer('sm_ticket_action', 'nonce');
+        $id = intval($_GET['id']);
+        $ticket = SM_DB::get_ticket($id);
+
+        if (!$ticket) wp_send_json_error('Ticket not found');
+
+        // Check permission
+        $user = wp_get_current_user();
+        $is_sys_admin = in_array('sm_system_admin', $user->roles) || in_array('administrator', $user->roles);
+        $is_officer = in_array('sm_syndicate_admin', $user->roles);
+
+        if (!$is_sys_admin) {
+             if ($is_officer) {
+                 $gov = get_user_meta($user->ID, 'sm_governorate', true);
+                 if ($gov && $ticket->province !== $gov) wp_send_json_error('Access denied');
+             } else {
+                 global $wpdb;
+                 $member_id = $wpdb->get_var($wpdb->prepare("SELECT id FROM {$wpdb->prefix}sm_members WHERE wp_user_id = %d", $user->ID));
+                 if ($ticket->member_id != $member_id) wp_send_json_error('Access denied');
+             }
+        }
+
+        $thread = SM_DB::get_ticket_thread($id);
+        wp_send_json_success(array('ticket' => $ticket, 'thread' => $thread));
+    }
+
+    public function ajax_add_ticket_reply() {
+        if (!is_user_logged_in()) wp_send_json_error('Unauthorized');
+        check_ajax_referer('sm_ticket_action', 'nonce');
+
+        $ticket_id = intval($_POST['ticket_id']);
+
+        $file_url = null;
+        if (!empty($_FILES['attachment']['name'])) {
+            require_once(ABSPATH . 'wp-admin/includes/file.php');
+            require_once(ABSPATH . 'wp-admin/includes/image.php');
+            require_once(ABSPATH . 'wp-admin/includes/media.php');
+            $attachment_id = media_handle_upload('attachment', 0);
+            if (!is_wp_error($attachment_id)) {
+                $file_url = wp_get_attachment_url($attachment_id);
+            }
+        }
+
+        $data = array(
+            'ticket_id' => $ticket_id,
+            'sender_id' => get_current_user_id(),
+            'message' => sanitize_textarea_field($_POST['message']),
+            'file_url' => $file_url
+        );
+
+        $reply_id = SM_DB::add_ticket_reply($data);
+        if ($reply_id) {
+            // If officer replies, set status to in-progress
+            if (!in_array('sm_syndicate_member', wp_get_current_user()->roles)) {
+                SM_DB::update_ticket_status($ticket_id, 'in-progress');
+            }
+            wp_send_json_success($reply_id);
+        } else wp_send_json_error('Failed to add reply');
+    }
+
+    public function ajax_close_ticket() {
+        if (!is_user_logged_in()) wp_send_json_error('Unauthorized');
+        check_ajax_referer('sm_ticket_action', 'nonce');
+
+        $id = intval($_POST['id']);
+        if (SM_DB::update_ticket_status($id, 'closed')) wp_send_json_success();
+        else wp_send_json_error('Failed to close ticket');
+    }
 }

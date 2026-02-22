@@ -437,3 +437,35 @@
 @media (max-width: 768px) {
     .sm-verify-search-box > form > div { grid-template-columns: 1fr !important; }
 }
+
+/* Ticketing System Styles */
+.sm-tickets-wrapper {
+    margin: 20px 0;
+}
+
+.sm-ticket-card:hover {
+    border-color: var(--sm-primary-color) !important;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+    transform: translateY(-2px);
+}
+
+.sm-loader-mini {
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid var(--sm-primary-color);
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    animation: sm-spin 1s linear infinite;
+    display: inline-block;
+}
+
+@media (max-width: 992px) {
+    .sm-tickets-wrapper { flex-direction: column; }
+    .sm-tickets-sidebar { width: 100% !important; }
+    .sm-tickets-sidebar > div { position: static !important; }
+}
+
+#ticket-thread-body::-webkit-scrollbar { width: 6px; }
+#ticket-thread-body::-webkit-scrollbar-track { background: #f1f1f1; }
+#ticket-thread-body::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 10px; }
+#ticket-thread-body::-webkit-scrollbar-thumb:hover { background: #a0aec0; }
