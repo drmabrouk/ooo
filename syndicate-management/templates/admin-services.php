@@ -10,7 +10,7 @@ $member_by_wp = $wpdb->get_row($wpdb->prepare("SELECT id FROM {$wpdb->prefix}sm_
 if ($member_by_wp) $member_id = $member_by_wp->id;
 
 // Fetch services
-$services = SM_DB::get_services();
+$services = SM_DB::get_services(['status' => $is_official ? 'any' : 'active']);
 $my_requests = $member_id ? SM_DB::get_service_requests(['member_id' => $member_id]) : [];
 $all_requests = $is_official ? SM_DB::get_service_requests() : [];
 ?>
@@ -34,11 +34,21 @@ $all_requests = $is_official ? SM_DB::get_service_requests() : [];
             <?php if (empty($services)): ?>
                 <div style="grid-column: 1/-1; text-align: center; padding: 50px; color: #94a3b8;">لا توجد خدمات متاحة حالياً.</div>
             <?php else: ?>
-                <?php foreach ($services as $s): ?>
-                    <div class="sm-service-card" style="background: #fff; border: 1px solid var(--sm-border-color); border-radius: 15px; padding: 25px; display: flex; flex-direction: column; transition: 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
-                        <div style="width: 50px; height: 50px; background: var(--sm-primary-color); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #fff; margin-bottom: 20px;">
-                            <span class="dashicons dashicons-cloud" style="font-size: 24px; width: 24px; height: 24px;"></span>
+                <?php foreach ($services as $s):
+                    $is_active = $s->status === 'active';
+                ?>
+                    <div class="sm-service-card" style="background: #fff; border: 1px solid var(--sm-border-color); border-radius: 15px; padding: 25px; display: flex; flex-direction: column; transition: 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.02); opacity: <?php echo $is_active ? '1' : '0.7'; ?>;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+                            <div style="width: 50px; height: 50px; background: <?php echo $is_active ? 'var(--sm-primary-color)' : '#94a3b8'; ?>; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #fff;">
+                                <span class="dashicons dashicons-cloud" style="font-size: 24px; width: 24px; height: 24px;"></span>
+                            </div>
+                            <?php if ($is_official): ?>
+                                <span class="sm-badge <?php echo $is_active ? 'sm-badge-high' : 'sm-badge-low'; ?>" style="font-size: 10px;">
+                                    <?php echo $is_active ? 'نشطة' : 'معطلة'; ?>
+                                </span>
+                            <?php endif; ?>
                         </div>
+
                         <h3 style="margin: 0 0 10px 0; font-weight: 800; color: var(--sm-dark-color);"><?php echo esc_html($s->name); ?></h3>
                         <p style="font-size: 13px; color: #64748b; line-height: 1.6; margin-bottom: 20px; flex: 1;"><?php echo esc_html($s->description); ?></p>
 
@@ -47,10 +57,19 @@ $all_requests = $is_official ? SM_DB::get_service_requests() : [];
                             <?php if ($is_official): ?>
                                 <div style="display: flex; gap: 5px;">
                                     <button class="sm-btn sm-btn-outline" style="padding: 5px 10px; font-size: 11px;" onclick='editService(<?php echo json_encode($s); ?>)'>تعديل</button>
+                                    <?php if ($is_active): ?>
+                                        <button class="sm-btn" style="padding: 5px 10px; font-size: 11px; background: #f6993f;" onclick="toggleServiceStatus(<?php echo $s->id; ?>, 'suspended')">تعطيل</button>
+                                    <?php else: ?>
+                                        <button class="sm-btn" style="padding: 5px 10px; font-size: 11px; background: #38a169;" onclick="toggleServiceStatus(<?php echo $s->id; ?>, 'active')">تنشيط</button>
+                                    <?php endif; ?>
                                     <button class="sm-btn" style="padding: 5px 10px; font-size: 11px; background: #e53e3e;" onclick="deleteService(<?php echo $s->id; ?>)">حذف</button>
                                 </div>
                             <?php else: ?>
-                                <button class="sm-btn" style="width: auto; padding: 8px 20px;" onclick='requestService(<?php echo json_encode($s); ?>)'>طلب الخدمة</button>
+                                <?php if ($is_active): ?>
+                                    <button class="sm-btn" style="width: auto; padding: 8px 20px;" onclick='requestService(<?php echo json_encode($s); ?>)'>طلب الخدمة</button>
+                                <?php else: ?>
+                                    <button class="sm-btn" style="width: auto; padding: 8px 20px; background: #cbd5e0; cursor: not-allowed;" disabled>غير متوفرة</button>
+                                <?php endif; ?>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -86,7 +105,11 @@ $all_requests = $is_official ? SM_DB::get_service_requests() : [];
                             <tr>
                                 <td>#<?php echo $r->id; ?></td>
                                 <?php if ($is_official): ?>
-                                    <td style="font-weight: 700;"><?php echo esc_html($r->member_name); ?></td>
+                                    <td style="font-weight: 700;">
+                                        <a href="<?php echo add_query_arg(['sm_tab' => 'member-profile', 'member_id' => $r->member_id]); ?>" style="text-decoration: none; color: var(--sm-primary-color);">
+                                            <?php echo esc_html($r->member_name); ?>
+                                        </a>
+                                    </td>
                                     <td><?php echo esc_html(SM_Settings::get_governorates()[$r->governorate] ?? $r->governorate); ?></td>
                                 <?php endif; ?>
                                 <td><?php echo esc_html($r->service_name); ?></td>
@@ -97,6 +120,7 @@ $all_requests = $is_official ? SM_DB::get_service_requests() : [];
                                         <button class="sm-btn sm-btn-outline" style="padding: 5px 10px; font-size: 11px;" onclick='viewRequest(<?php echo json_encode($r); ?>)'>تفاصيل</button>
                                         <?php if ($r->status == 'approved'): ?>
                                             <a href="<?php echo admin_url('admin-ajax.php?action=sm_print_service_request&id=' . $r->id); ?>" target="_blank" class="sm-btn" style="padding: 5px 10px; font-size: 11px; background: #27ae60; text-decoration: none;">تحميل PDF</a>
+                                            <a href="<?php echo add_query_arg(['sm_tab' => 'member-profile', 'member_id' => $r->member_id, 'sub_tab' => 'documents']); ?>" class="sm-btn sm-btn-outline" style="padding: 5px 10px; font-size: 11px;">التقارير</a>
                                         <?php endif; ?>
                                         <?php if ($is_official && in_array($r->status, ['pending', 'processing'])): ?>
                                             <button class="sm-btn" style="padding: 5px 10px; font-size: 11px;" onclick="processRequest(<?php echo $r->id; ?>, 'approved')">اعتماد</button>
@@ -120,6 +144,22 @@ $all_requests = $is_official ? SM_DB::get_service_requests() : [];
             <div class="sm-form-group"><label class="sm-label">اسم الخدمة:</label><input name="name" type="text" class="sm-input" required></div>
             <div class="sm-form-group"><label class="sm-label">وصف الخدمة:</label><textarea name="description" class="sm-textarea" rows="3"></textarea></div>
             <div class="sm-form-group"><label class="sm-label">الرسوم (0 للمجانية):</label><input name="fees" type="number" step="0.01" class="sm-input" value="0"></div>
+
+            <div class="sm-form-group">
+                <label class="sm-label">حالة الخدمة:</label>
+                <select name="status" class="sm-select">
+                    <option value="active">نشطة (مفعلة)</option>
+                    <option value="suspended">معطلة (موقوفة)</option>
+                </select>
+            </div>
+
+            <div class="sm-form-group">
+                <label class="sm-label">حقول إضافية مطلوبة عند الطلب:</label>
+                <div id="sm-required-fields-builder" style="background: #f1f5f9; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    <div id="fields-list"></div>
+                    <button type="button" onclick="smAddRequiredField()" class="sm-btn sm-btn-outline" style="width: 100%; margin-top: 10px; font-size: 12px; background: #fff;">+ إضافة حقل إضافي</button>
+                </div>
+            </div>
 
             <div class="sm-form-group">
                 <label class="sm-label">البيانات الشخصية المطلوبة من ملف العضو:</label>
@@ -174,12 +214,46 @@ $all_requests = $is_official ? SM_DB::get_service_requests() : [];
 
 <script>
 (function($) {
+    window.smRefreshServicesList = function() {
+        const container = $('#available-services');
+        container.css('opacity', '0.5');
+        fetch(ajaxurl + '?action=sm_get_services_html&nonce=<?php echo wp_create_nonce("sm_admin_action"); ?>&t=' + Date.now())
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    const tempDiv = $('<div>').append($.parseHTML(res.data.html));
+                    const newContent = tempDiv.find('#available-services').html();
+                    container.html(newContent);
+                    container.css('opacity', '1');
+                }
+            });
+    };
+
+    window.smAddRequiredField = function(data = {name: '', label: '', type: 'text'}) {
+        const container = $('#fields-list');
+        const id = Date.now() + Math.random();
+        const html = `
+            <div class="sm-field-row" id="field_${id}" style="display: flex; gap: 5px; margin-bottom: 8px;">
+                <input type="text" placeholder="اسم الحقل (لاتيني)" class="sm-input req-field-name" value="${data.name}" style="flex: 1; font-size: 12px; padding: 5px;">
+                <input type="text" placeholder="تسمية الحقل (عربي)" class="sm-input req-field-label" value="${data.label}" style="flex: 1; font-size: 12px; padding: 5px;">
+                <select class="sm-select req-field-type" style="width: 80px; font-size: 11px; padding: 0 5px;">
+                    <option value="text" ${data.type==='text'?'selected':''}>نص</option>
+                    <option value="number" ${data.type==='number'?'selected':''}>رقم</option>
+                    <option value="date" ${data.type==='date'?'selected':''}>تاريخ</option>
+                </select>
+                <button type="button" onclick="$('#field_${id}').remove()" class="sm-btn" style="background: #e53e3e; width: 30px; padding: 0;">&times;</button>
+            </div>
+        `;
+        container.append(html);
+    };
+
     window.smOpenAddServiceModal = function() {
         const modal = $('#add-service-modal');
         modal.find('h3').text('إضافة خدمة رقمية جديدة');
         const form = $('#add-service-form');
         form[0].reset();
         form.find('input[name="profile_fields[]"]').prop('checked', false);
+        $('#fields-list').empty();
 
         form.off('submit').on('submit', function(e) {
             e.preventDefault();
@@ -191,18 +265,39 @@ $all_requests = $is_official ? SM_DB::get_service_requests() : [];
             });
             fd.append('selected_profile_fields', JSON.stringify(profileFields));
 
+            const reqFields = [];
+            $('.sm-field-row').each(function() {
+                const name = $(this).find('.req-field-name').val();
+                const label = $(this).find('.req-field-label').val();
+                const type = $(this).find('.req-field-type').val();
+                if (name && label) reqFields.push({name, label, type});
+            });
+            fd.append('required_fields', JSON.stringify(reqFields));
+
             fd.append('action', 'sm_add_service');
             fd.append('nonce', '<?php echo wp_create_nonce("sm_admin_action"); ?>');
             fetch(ajaxurl, {method: 'POST', body: fd}).then(r=>r.json()).then(res=>{
                 if (res.success) {
                     smShowNotification('تم إضافة الخدمة بنجاح');
-                    setTimeout(() => location.reload(), 1000);
+                    smRefreshServicesList();
+                    $('#add-service-modal').fadeOut();
                 } else {
                     alert(res.data);
                 }
             });
         });
         modal.fadeIn().css('display', 'flex');
+    };
+
+    window.toggleServiceStatus = function(id, status) {
+        const fd = new FormData();
+        fd.append('action', 'sm_update_service');
+        fd.append('id', id);
+        fd.append('status', status);
+        fd.append('nonce', '<?php echo wp_create_nonce("sm_admin_action"); ?>');
+        fetch(ajaxurl, {method: 'POST', body: fd}).then(r=>r.json()).then(res=>{
+            if (res.success) smRefreshServicesList();
+        });
     };
 
     window.deleteService = function(id) {
@@ -212,7 +307,7 @@ $all_requests = $is_official ? SM_DB::get_service_requests() : [];
         fd.append('id', id);
         fd.append('nonce', '<?php echo wp_create_nonce("sm_admin_action"); ?>');
         fetch(ajaxurl, {method: 'POST', body: fd}).then(r=>r.json()).then(res=>{
-            if (res.success) location.reload();
+            if (res.success) smRefreshServicesList();
         });
     };
 
@@ -222,6 +317,15 @@ $all_requests = $is_official ? SM_DB::get_service_requests() : [];
         modal.find('[name="name"]').val(s.name);
         modal.find('[name="description"]').val(s.description);
         modal.find('[name="fees"]').val(s.fees);
+        modal.find('[name="status"]').val(s.status);
+
+        $('#fields-list').empty();
+        if (s.required_fields) {
+            try {
+                const fields = JSON.parse(s.required_fields);
+                fields.forEach(f => smAddRequiredField(f));
+            } catch(e) {}
+        }
 
         modal.find('input[name="profile_fields[]"]').prop('checked', false);
         if (s.selected_profile_fields) {
@@ -241,15 +345,25 @@ $all_requests = $is_official ? SM_DB::get_service_requests() : [];
                 profileFields.push($(this).val());
             });
             fd.append('selected_profile_fields', JSON.stringify(profileFields));
+
+            const reqFields = [];
+            $('.sm-field-row').each(function() {
+                const name = $(this).find('.req-field-name').val();
+                const label = $(this).find('.req-field-label').val();
+                const type = $(this).find('.req-field-type').val();
+                if (name && label) reqFields.push({name, label, type});
+            });
+            fd.append('required_fields', JSON.stringify(reqFields));
+
             fd.append('id', s.id);
-            fd.append('status', s.status);
             fd.append('action', 'sm_update_service');
             fd.append('nonce', '<?php echo wp_create_nonce("sm_admin_action"); ?>');
 
             fetch(ajaxurl, {method: 'POST', body: fd}).then(r=>r.json()).then(res=>{
                 if (res.success) {
                     smShowNotification('تم تحديث الخدمة بنجاح');
-                    setTimeout(() => location.reload(), 1000);
+                    smRefreshServicesList();
+                    $('#add-service-modal').fadeOut();
                 } else alert(res.data);
             });
         });
