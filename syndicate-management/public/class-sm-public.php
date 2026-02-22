@@ -1962,12 +1962,12 @@ class SM_Public {
         $data = [
             'title' => sanitize_text_field($_POST['title']),
             'content' => wp_kses_post($_POST['content']),
-            'doc_type' => 'document',
-            'format' => sanitize_text_field($_POST['format']),
             'options' => [
+                'doc_type' => sanitize_text_field($_POST['doc_type'] ?? 'report'),
                 'header' => !empty($_POST['header']),
                 'footer' => !empty($_POST['footer']),
                 'qr' => !empty($_POST['qr']),
+                'barcode' => !empty($_POST['barcode']),
                 'frame' => !empty($_POST['frame'])
             ]
         ];
@@ -2010,13 +2010,16 @@ class SM_Public {
         if (!current_user_can('sm_manage_system')) wp_send_json_error('Unauthorized');
         check_ajax_referer('sm_pub_action', 'nonce');
 
-        update_option('sm_pub_stamp_url', esc_url_raw($_POST['stamp']));
-        update_option('sm_pub_footer_statement', sanitize_textarea_field($_POST['footer']));
-        update_option('sm_pub_color_primary', sanitize_hex_color($_POST['p_color']));
-        update_option('sm_pub_color_secondary', sanitize_hex_color($_POST['s_color']));
-
         $syndicate = SM_Settings::get_syndicate_info();
-        $syndicate['syndicate_logo'] = esc_url_raw($_POST['logo']);
+        $syndicate['syndicate_name'] = sanitize_text_field($_POST['syndicate_name']);
+        $syndicate['authority_name'] = sanitize_text_field($_POST['authority_name']);
+        $syndicate['syndicate_officer_name'] = sanitize_text_field($_POST['syndicate_officer_name']);
+        $syndicate['phone'] = sanitize_text_field($_POST['phone']);
+        $syndicate['email'] = sanitize_email($_POST['email']);
+        $syndicate['address'] = sanitize_text_field($_POST['address']);
+        $syndicate['syndicate_logo'] = esc_url_raw($_POST['syndicate_logo']);
+        $syndicate['authority_logo'] = esc_url_raw($_POST['authority_logo']);
+
         SM_Settings::save_syndicate_info($syndicate);
 
         wp_send_json_success();
@@ -2029,6 +2032,8 @@ class SM_Public {
         $args = array(
             'status' => $_GET['status'] ?? '',
             'category' => $_GET['category'] ?? '',
+            'priority' => $_GET['priority'] ?? '',
+            'province' => $_GET['province'] ?? '',
             'search' => $_GET['search'] ?? ''
         );
         $tickets = SM_DB::get_tickets($args);

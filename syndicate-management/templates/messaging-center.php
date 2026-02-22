@@ -39,65 +39,57 @@ $priorities = array(
 );
 ?>
 
-<div class="sm-tickets-wrapper" dir="rtl" style="display: flex; gap: 25px; min-height: 700px; font-family: 'Rubik', sans-serif;">
+<div class="sm-tickets-wrapper" dir="rtl" style="min-height: 700px; font-family: 'Rubik', sans-serif;">
 
-    <!-- Sidebar: Filters & Actions -->
-    <div class="sm-tickets-sidebar" style="width: 280px; flex-shrink: 0;">
-        <div style="background: #fff; border-radius: 15px; border: 1px solid var(--sm-border-color); padding: 25px; box-shadow: var(--sm-shadow); position: sticky; top: 20px;">
-            <?php if ($is_member): ?>
-                <button onclick="smOpenCreateTicketModal()" class="sm-btn" style="width: 100%; height: 45px; font-weight: 700; margin-bottom: 25px; box-shadow: 0 4px 12px rgba(246, 48, 73, 0.2);">
-                    <span class="dashicons dashicons-plus-alt" style="margin-top: 4px;"></span> تذكرة جديدة
-                </button>
-            <?php endif; ?>
+    <!-- Top Filter Bar -->
+    <div class="sm-tickets-top-bar" style="background: #fff; border-radius: 15px; border: 1px solid var(--sm-border-color); padding: 20px 25px; box-shadow: var(--sm-shadow); margin-bottom: 25px;">
+        <div style="display: flex; flex-wrap: wrap; gap: 15px; align-items: center;">
+            <h2 style="margin: 0; font-weight: 800; color: var(--sm-dark-color); font-size: 1.2em; flex: 1; min-width: 200px;">نظام التذاكر والدعم</h2>
 
-            <h4 style="margin: 0 0 15px 0; font-size: 14px; color: var(--sm-dark-color); font-weight: 800; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;">تصفية التذاكر</h4>
-
-            <div class="sm-form-group">
-                <label class="sm-label" style="font-size: 12px;">الحالة:</label>
-                <select id="filter-status" class="sm-select" onchange="smLoadTickets()">
-                    <option value="">الكل</option>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <select id="filter-status" class="sm-select" onchange="smLoadTickets()" style="width: 120px; height: 40px; padding: 0 10px;">
+                    <option value="">كل الحالات</option>
                     <?php foreach($statuses as $k => $v) echo "<option value='$k'>{$v['label']}</option>"; ?>
                 </select>
-            </div>
 
-            <div class="sm-form-group">
-                <label class="sm-label" style="font-size: 12px;">القسم:</label>
-                <select id="filter-category" class="sm-select" onchange="smLoadTickets()">
+                <select id="filter-category" class="sm-select" onchange="smLoadTickets()" style="width: 130px; height: 40px; padding: 0 10px;">
                     <option value="">كل الأقسام</option>
                     <?php foreach($categories as $k => $v) echo "<option value='$k'>{$v['label']}</option>"; ?>
                 </select>
-            </div>
 
-            <div class="sm-form-group">
-                <label class="sm-label" style="font-size: 12px;">البحث:</label>
+                <select id="filter-priority" class="sm-select" onchange="smLoadTickets()" style="width: 110px; height: 40px; padding: 0 10px;">
+                    <option value="">كل الأولويات</option>
+                    <?php foreach($priorities as $k => $v) echo "<option value='$k'>$v</option>"; ?>
+                </select>
+
+                <?php if ($is_admin): ?>
+                    <select id="filter-province" class="sm-select" onchange="smLoadTickets()" style="width: 130px; height: 40px; padding: 0 10px;">
+                        <option value="">كل المحافظات</option>
+                        <?php foreach(SM_Settings::get_governorates() as $k => $v) echo "<option value='$k'>$v</option>"; ?>
+                    </select>
+                <?php endif; ?>
+
                 <div style="position: relative;">
-                    <input type="text" id="filter-search" class="sm-input" placeholder="رقم التذكرة أو الموضوع..." oninput="smLoadTickets()" style="padding-left: 35px;">
-                    <span class="dashicons dashicons-search" style="position: absolute; left: 10px; top: 10px; color: #94a3b8; font-size: 18px;"></span>
+                    <input type="text" id="filter-search" class="sm-input" placeholder="بحث..." oninput="smLoadTickets()" style="width: 180px; height: 40px; padding-left: 30px;">
+                    <span class="dashicons dashicons-search" style="position: absolute; left: 8px; top: 10px; color: #94a3b8; font-size: 18px;"></span>
                 </div>
+
+                <?php if ($is_member): ?>
+                    <button onclick="smOpenCreateTicketModal()" class="sm-btn" style="height: 40px; padding: 0 15px; font-weight: 700;">+ تذكرة</button>
+                <?php endif; ?>
             </div>
         </div>
     </div>
 
-    <!-- Main Content: Tickets List / Details -->
-    <div class="sm-tickets-main" style="flex: 1;">
+    <!-- Main Content -->
+    <div class="sm-tickets-main">
         <div id="tickets-list-container">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-                <h2 style="margin: 0; font-weight: 800; color: var(--sm-dark-color);">نظام التذاكر والدعم الفني</h2>
-                <div style="font-size: 13px; color: #64748b;">
-                    <?php if ($is_admin): ?>
-                        <span class="sm-badge sm-badge-mid">كامل النظام</span>
-                    <?php elseif ($is_officer): ?>
-                        <span class="sm-badge sm-badge-mid">لجنة محافظة: <?php echo esc_html(SM_Settings::get_governorates()[$member_gov] ?? $member_gov); ?></span>
-                    <?php endif; ?>
-                </div>
-            </div>
-
-            <div id="sm-tickets-grid" style="display: grid; gap: 15px;">
+            <div id="sm-tickets-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px;">
                 <!-- Loaded via JS -->
             </div>
         </div>
 
-        <div id="ticket-details-container" style="display: none;">
+        <div id="ticket-details-container" style="display: none; animation: smFadeIn 0.3s ease-out;">
             <!-- Loaded via JS -->
         </div>
     </div>
@@ -147,6 +139,9 @@ $priorities = array(
 
 <script>
 (function($) {
+    let currentActiveTicketId = null;
+    let autoRefreshInterval = null;
+
     const categories = <?php echo json_encode($categories); ?>;
     const statuses = <?php echo json_encode($statuses); ?>;
     const priorities = <?php echo json_encode($priorities); ?>;
@@ -158,16 +153,18 @@ $priorities = array(
         $('#create-ticket-modal').fadeIn().css('display', 'flex');
     };
 
-    window.smLoadTickets = function() {
+    window.smLoadTickets = function(showLoader = true) {
         const grid = $('#sm-tickets-grid');
-        grid.css('opacity', '0.5');
+        if (showLoader) grid.css('opacity', '0.5');
 
         const status = $('#filter-status').val();
         const category = $('#filter-category').val();
+        const priority = $('#filter-priority').val();
+        const province = $('#filter-province').val() || '';
         const search = $('#filter-search').val();
         const nonce = '<?php echo wp_create_nonce("sm_ticket_action"); ?>';
 
-        fetch(ajaxurl + `?action=sm_get_tickets&status=${status}&category=${category}&search=${search}&nonce=${nonce}&t=${Date.now()}`)
+        fetch(ajaxurl + `?action=sm_get_tickets&status=${status}&category=${category}&priority=${priority}&province=${province}&search=${search}&nonce=${nonce}&t=${Date.now()}`)
         .then(r => r.json())
         .then(res => {
             grid.css('opacity', '1').empty();
@@ -208,42 +205,37 @@ $priorities = array(
         });
     };
 
-    window.smViewTicket = function(id) {
-        $('#tickets-list-container').hide();
-        const container = $('#ticket-details-container').show().html('<div style="text-align: center; padding: 100px;"><div class="sm-loader-mini"></div></div>');
+    window.smViewTicket = function(id, silent = false) {
+        currentActiveTicketId = id;
+        if (!silent) {
+            $('#tickets-list-container').hide();
+            $('#ticket-details-container').show().html('<div style="text-align: center; padding: 100px;"><div class="sm-loader-mini"></div></div>');
+        }
         const nonce = '<?php echo wp_create_nonce("sm_ticket_action"); ?>';
 
-        fetch(ajaxurl + `?action=sm_get_ticket_details&id=${id}&nonce=${nonce}`)
+        fetch(ajaxurl + `?action=sm_get_ticket_details&id=${id}&nonce=${nonce}&t=${Date.now()}`)
         .then(r => r.json())
         .then(res => {
             if (res.success) {
                 const t = res.data.ticket;
                 const thread = res.data.thread;
+
+                if (silent) {
+                    const threadHtml = renderThreadHtml(thread);
+                    const oldHtml = $('#ticket-thread-body').html();
+                    if (threadHtml.trim() !== oldHtml.trim()) {
+                        $('#ticket-thread-body').html(threadHtml);
+                        const threadBody = $('#ticket-thread-body');
+                        threadBody.scrollTop(threadBody[0].scrollHeight);
+                    }
+                    return;
+                }
                 const cat = categories[t.category] || categories['other'];
                 const stat = statuses[t.status];
 
-                let threadHtml = '';
-                thread.forEach(m => {
-                    const isMe = m.sender_id == currentUserId;
-                    let fileHtml = '';
-                    if (m.file_url) {
-                        const fileName = m.file_url.split('/').pop();
-                        fileHtml = `<a href="${m.file_url}" target="_blank" style="display: inline-flex; align-items: center; gap: 5px; margin-top: 10px; padding: 8px 12px; background: rgba(0,0,0,0.05); border-radius: 8px; text-decoration: none; color: inherit; font-size: 12px;">
-                            <span class="dashicons dashicons-paperclip"></span> ${fileName}
-                        </a>`;
-                    }
+                const threadHtml = renderThreadHtml(thread);
 
-                    threadHtml += `
-                        <div style="display: flex; flex-direction: column; align-items: ${isMe ? 'flex-end' : 'flex-start'}; margin-bottom: 20px;">
-                            <div style="background: ${isMe ? 'var(--sm-primary-color)' : '#fff'}; color: ${isMe ? '#fff' : 'inherit'}; padding: 15px 20px; border-radius: 15px; border-bottom-${isMe ? 'left' : 'right'}-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: ${isMe ? 'none' : '1px solid #e2e8f0'}; max-width: 80%;">
-                                <div style="font-weight: 800; font-size: 11px; margin-bottom: 5px; opacity: 0.8;">${m.sender_name} • ${m.created_at}</div>
-                                <div style="font-size: 14px; line-height: 1.6; white-space: pre-wrap;">${m.message}</div>
-                                ${fileHtml}
-                            </div>
-                        </div>
-                    `;
-                });
-
+                const container = $('#ticket-details-container');
                 container.html(`
                     <div style="background: #fff; border-radius: 15px; border: 1px solid var(--sm-border-color); overflow: hidden; box-shadow: var(--sm-shadow);">
                         <div style="padding: 20px 30px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; background: #fafafa;">
@@ -320,10 +312,36 @@ $priorities = array(
     };
 
     window.smBackToList = function() {
+        currentActiveTicketId = null;
         $('#ticket-details-container').hide();
         $('#tickets-list-container').show();
         smLoadTickets();
     };
+
+    function renderThreadHtml(thread) {
+        let html = '';
+        thread.forEach(m => {
+            const isMe = m.sender_id == currentUserId;
+            let fileHtml = '';
+            if (m.file_url) {
+                const fileName = m.file_url.split('/').pop();
+                fileHtml = `<a href="${m.file_url}" target="_blank" style="display: inline-flex; align-items: center; gap: 5px; margin-top: 10px; padding: 8px 12px; background: rgba(0,0,0,0.05); border-radius: 8px; text-decoration: none; color: inherit; font-size: 12px;">
+                    <span class="dashicons dashicons-paperclip"></span> ${fileName}
+                </a>`;
+            }
+
+            html += `
+                <div style="display: flex; flex-direction: column; align-items: ${isMe ? 'flex-end' : 'flex-start'}; margin-bottom: 20px;">
+                    <div style="background: ${isMe ? 'var(--sm-primary-color)' : '#fff'}; color: ${isMe ? '#fff' : 'inherit'}; padding: 15px 20px; border-radius: 15px; border-bottom-${isMe ? 'left' : 'right'}-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: ${isMe ? 'none' : '1px solid #e2e8f0'}; max-width: 80%;">
+                        <div style="font-weight: 800; font-size: 11px; margin-bottom: 5px; opacity: 0.8;">${m.sender_name} • ${m.created_at}</div>
+                        <div style="font-size: 14px; line-height: 1.6; white-space: pre-wrap;">${m.message}</div>
+                        ${fileHtml}
+                    </div>
+                </div>
+            `;
+        });
+        return html;
+    }
 
     window.smCloseTicket = function(id) {
         if (!confirm('هل أنت متأكد من إغلاق هذه التذكرة بشكل نهائي؟')) return;
@@ -365,6 +383,16 @@ $priorities = array(
     });
 
     smLoadTickets();
+
+    // Auto-refresh logic
+    if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+    autoRefreshInterval = setInterval(() => {
+        if (currentActiveTicketId) {
+            smViewTicket(currentActiveTicketId, true);
+        } else if ($('#tickets-list-container').is(':visible')) {
+            smLoadTickets(false);
+        }
+    }, 5000);
 
 })(jQuery);
 </script>

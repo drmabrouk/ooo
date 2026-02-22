@@ -979,6 +979,16 @@ class SM_DB {
             $params[] = sanitize_text_field($args['category']);
         }
 
+        if (!empty($args['priority'])) {
+            $where .= " AND t.priority = %s";
+            $params[] = sanitize_text_field($args['priority']);
+        }
+
+        if (!empty($args['province'])) {
+            $where .= " AND t.province = %s";
+            $params[] = sanitize_text_field($args['province']);
+        }
+
         if (!empty($args['search'])) {
             $s = '%' . $wpdb->esc_like($args['search']) . '%';
             $where .= " AND (t.subject LIKE %s OR m.name LIKE %s)";

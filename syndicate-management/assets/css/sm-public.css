@@ -469,3 +469,19 @@
 #ticket-thread-body::-webkit-scrollbar-track { background: #f1f1f1; }
 #ticket-thread-body::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 10px; }
 #ticket-thread-body::-webkit-scrollbar-thumb:hover { background: #a0aec0; }
+
+/* Digital Service Cards */
+.sm-service-card {
+    transition: all 0.3s ease;
+}
+.sm-service-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.08) !important;
+    border-color: var(--sm-primary-color) !important;
+}
+.sm-service-card .sm-btn {
+    opacity: 0.9;
+}
+.sm-service-card .sm-btn:hover {
+    opacity: 1;
+}
