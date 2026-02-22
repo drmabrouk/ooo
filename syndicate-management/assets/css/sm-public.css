@@ -229,8 +229,10 @@
 }
 
 .sm-badge-low { background: #EBF8FF; color: #3182CE; }
+.sm-badge-mid { background: #FAF5FF; color: #805AD5; }
 .sm-badge-medium { background: #FFFAF0; color: #DD6B20; }
-.sm-badge-high { background: #FFF5F5; color: #E53E3E; }
+.sm-badge-high { background: #E6FFFA; color: #319795; }
+.sm-badge-urgent { background: #FFF5F5; color: #E53E3E; }
 
 /* Dashboard Header */
 .sm-main-header {
@@ -373,4 +375,65 @@
     font-size: 16px;
     width: 16px;
     height: 16px;
+}
+
+/* Verification Engine Styles */
+.sm-verify-container {
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 30px;
+    background: #f8fafc;
+    border-radius: 20px;
+    border: 1px solid #e2e8f0;
+}
+.sm-verify-header { text-align: center; margin-bottom: 40px; }
+.sm-verify-search-box {
+    background: #ffffff;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    border: 1px solid #f1f5f9;
+}
+.sm-verify-card {
+    background: #fff;
+    border-radius: 15px;
+    padding: 25px;
+    margin-bottom: 20px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+    animation: smFadeIn 0.3s ease-out;
+}
+.sm-verify-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #f1f5f9;
+}
+.sm-verify-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+.sm-verify-item label {
+    display: block;
+    font-size: 12px;
+    color: #94a3b8;
+    margin-bottom: 5px;
+}
+.sm-verify-item span {
+    font-weight: 700;
+}
+.sm-verify-status-valid { color: #38a169 !important; font-weight: 800 !important; }
+.sm-verify-status-invalid { color: #e53e3e !important; font-weight: 800 !important; }
+
+.spin { animation: sm-spin 1s linear infinite; }
+@keyframes sm-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@media (max-width: 768px) {
+    .sm-verify-search-box > form > div { grid-template-columns: 1fr !important; }
 }
