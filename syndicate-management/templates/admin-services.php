@@ -282,7 +282,7 @@ $all_requests = $is_official ? SM_DB::get_service_requests() : [];
                     smRefreshServicesList();
                     $('#add-service-modal').fadeOut();
                 } else {
-                    alert(res.data);
+                    smShowNotification(res.data, true);
                 }
             });
         });
@@ -364,7 +364,9 @@ $all_requests = $is_official ? SM_DB::get_service_requests() : [];
                     smShowNotification('تم تحديث الخدمة بنجاح');
                     smRefreshServicesList();
                     $('#add-service-modal').fadeOut();
-                } else alert(res.data);
+                } else {
+                    smShowNotification(res.data, true);
+                }
             });
         });
 
@@ -416,7 +418,12 @@ $all_requests = $is_official ? SM_DB::get_service_requests() : [];
         fd.append('nonce', '<?php echo wp_create_nonce("sm_service_action"); ?>');
 
         fetch(ajaxurl, {method: 'POST', body: fd}).then(r=>r.json()).then(res=>{
-            if (res.success) { alert('تم تقديم الطلب بنجاح'); location.reload(); } else alert(res.data);
+            if (res.success) {
+                smShowNotification('تم تقديم الطلب بنجاح');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                smShowNotification(res.data, true);
+            }
         });
     });
 
@@ -441,7 +448,12 @@ $all_requests = $is_official ? SM_DB::get_service_requests() : [];
         fd.append('status', status);
         fd.append('nonce', '<?php echo wp_create_nonce("sm_admin_action"); ?>');
         fetch(ajaxurl, {method: 'POST', body: fd}).then(r=>r.json()).then(res=>{
-            if (res.success) location.reload(); else alert(res.data);
+            if (res.success) {
+                smShowNotification('تم تحديث حالة الطلب');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                smShowNotification(res.data, true);
+            }
         });
     };
 

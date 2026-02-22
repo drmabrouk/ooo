@@ -695,6 +695,10 @@ class SM_DB {
 
     public static function delete_service($id) {
         global $wpdb;
+        $service = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}sm_services WHERE id = %d", $id));
+        if ($service) {
+             SM_Logger::log('حذف خدمة رقمية (مع إمكانية الاستعادة)', 'ROLLBACK_DATA:' . json_encode(['table' => 'services', 'data' => (array)$service]));
+        }
         return $wpdb->delete("{$wpdb->prefix}sm_services", array('id' => $id));
     }
 

@@ -74,6 +74,7 @@ class SM_Admin {
 
     public function enqueue_styles() {
         wp_enqueue_style('google-font-rubik', 'https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;700;800;900&display=swap', array(), null);
+        wp_add_inline_script('jquery', 'var ajaxurl = "' . admin_url('admin-ajax.php') . '";', 'before');
         wp_enqueue_style($this->plugin_name, SM_PLUGIN_URL . 'assets/css/sm-admin.css', array(), $this->version, 'all');
 
         $appearance = SM_Settings::get_appearance();
@@ -105,16 +106,19 @@ class SM_Admin {
             check_admin_referer('sm_admin_action', 'sm_admin_nonce');
 
             // 1. Save Syndicate Info
-            SM_Settings::save_syndicate_info(array(
-                'syndicate_name' => sanitize_text_field($_POST['syndicate_name']),
-                'syndicate_officer_name' => sanitize_text_field($_POST['syndicate_officer_name']),
-                'phone' => sanitize_text_field($_POST['syndicate_phone']),
-                'email' => sanitize_email($_POST['syndicate_email']),
-                'syndicate_logo' => esc_url_raw($_POST['syndicate_logo']),
-                'address' => sanitize_text_field($_POST['syndicate_address']),
-                'authority_name' => sanitize_text_field($_POST['authority_name'] ?? ''),
-                'authority_logo' => esc_url_raw($_POST['authority_logo'] ?? '')
-            ));
+            $info = SM_Settings::get_syndicate_info();
+            $info['syndicate_name'] = sanitize_text_field($_POST['syndicate_name']);
+            $info['syndicate_officer_name'] = sanitize_text_field($_POST['syndicate_officer_name']);
+            $info['phone'] = sanitize_text_field($_POST['syndicate_phone']);
+            $info['email'] = sanitize_email($_POST['syndicate_email']);
+            $info['syndicate_logo'] = esc_url_raw($_POST['syndicate_logo']);
+            $info['address'] = sanitize_text_field($_POST['syndicate_address']);
+            $info['map_link'] = esc_url_raw($_POST['syndicate_map_link'] ?? '');
+            $info['extra_details'] = sanitize_textarea_field($_POST['syndicate_extra_details'] ?? '');
+            $info['authority_name'] = sanitize_text_field($_POST['authority_name'] ?? '');
+            $info['authority_logo'] = esc_url_raw($_POST['authority_logo'] ?? '');
+
+            SM_Settings::save_syndicate_info($info);
 
             // 2. Save Section Labels
             $labels = SM_Settings::get_labels();
@@ -188,7 +192,8 @@ class SM_Admin {
                 }
             }
             if (!empty($specs)) SM_Settings::save_specializations($specs);
-            echo '<div class="updated"><p>تم حفظ الخيارات المهنية بنجاح.</p></div>';
+            wp_redirect(add_query_arg(['sm_tab' => 'global-settings', 'sub' => 'professional', 'settings_saved' => 1], wp_get_referer()));
+            exit;
         }
 
         $member_filters = array();
