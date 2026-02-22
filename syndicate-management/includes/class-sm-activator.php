@@ -289,6 +289,38 @@ class SM_Activator {
             UNIQUE KEY serial_number (serial_number)
         ) $charset_collate;\n";
 
+        // Tickets Table
+        $table_name = $wpdb->prefix . 'sm_tickets';
+        $sql .= "CREATE TABLE $table_name (
+            id mediumint(9) NOT NULL AUTO_INCREMENT,
+            member_id mediumint(9) NOT NULL,
+            subject varchar(255) NOT NULL,
+            category varchar(50),
+            priority enum('low', 'medium', 'high') DEFAULT 'medium',
+            status enum('open', 'in-progress', 'closed') DEFAULT 'open',
+            province varchar(50),
+            created_at datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
+            updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
+            KEY member_id (member_id),
+            KEY status (status),
+            KEY province (province)
+        ) $charset_collate;\n";
+
+        // Ticket Thread Table
+        $table_name = $wpdb->prefix . 'sm_ticket_thread';
+        $sql .= "CREATE TABLE $table_name (
+            id mediumint(9) NOT NULL AUTO_INCREMENT,
+            ticket_id mediumint(9) NOT NULL,
+            sender_id bigint(20) NOT NULL,
+            message text NOT NULL,
+            file_url text,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
+            PRIMARY KEY  (id),
+            KEY ticket_id (ticket_id),
+            KEY sender_id (sender_id)
+        ) $charset_collate;\n";
+
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';
         dbDelta($sql);
 

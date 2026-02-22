@@ -3,428 +3,378 @@
 $my_id = get_current_user_id();
 $user = wp_get_current_user();
 $roles = (array)$user->roles;
-$is_official = in_array('sm_syndicate_admin', $roles) || in_array('sm_system_admin', $roles) || in_array('administrator', $roles);
-$my_gov = get_user_meta($my_id, 'sm_governorate', true);
+$is_admin = in_array('sm_system_admin', $roles) || in_array('administrator', $roles);
+$is_officer = in_array('sm_syndicate_admin', $roles);
+$is_member = in_array('sm_syndicate_member', $roles);
+$is_official = $is_admin || $is_officer;
 
-// Get member_id if current user is a member
+// Get member data if applicable
 $member_id = 0;
+$member_gov = '';
 global $wpdb;
-$member_by_wp = $wpdb->get_row($wpdb->prepare("SELECT id, governorate FROM {$wpdb->prefix}sm_members WHERE wp_user_id = %d", $my_id));
-if ($member_by_wp) {
-    $member_id = $member_by_wp->id;
-    $my_gov = $member_by_wp->governorate;
+$member = $wpdb->get_row($wpdb->prepare("SELECT id, governorate FROM {$wpdb->prefix}sm_members WHERE wp_user_id = %d", $my_id));
+if ($member) {
+    $member_id = $member->id;
+    $member_gov = $member->governorate;
 }
 
-$gov_label = SM_Settings::get_governorates()[$my_gov] ?? $my_gov;
+$categories = array(
+    'inquiry' => array('label' => 'استفسار عام', 'color' => '#EBF8FF', 'text' => '#3182CE'),
+    'finance' => array('label' => 'مشكلة مالية', 'color' => '#FEF3C7', 'text' => '#B45309'),
+    'technical' => array('label' => 'دعم فني', 'color' => '#F0FDF4', 'text' => '#15803D'),
+    'membership' => array('label' => 'تجديد عضوية', 'color' => '#F5F3FF', 'text' => '#6D28D9'),
+    'other' => array('label' => 'أخرى', 'color' => '#F1F5F9', 'text' => '#475569')
+);
+
+$statuses = array(
+    'open' => array('label' => 'مفتوح', 'class' => 'sm-badge-high'),
+    'in-progress' => array('label' => 'قيد التنفيذ', 'class' => 'sm-badge-mid'),
+    'closed' => array('label' => 'مغلق', 'class' => 'sm-badge-low')
+);
+
+$priorities = array(
+    'low' => 'منخفض',
+    'medium' => 'متوسط',
+    'high' => 'عاجل'
+);
 ?>
 
-<div class="sm-messaging-wrapper" dir="rtl" style="display: flex; height: calc(100vh - 150px); min-height: 600px; background: #f0f2f5; border-radius: var(--sm-radius); overflow: hidden; border: 1px solid var(--sm-border-color); box-shadow: var(--sm-shadow);">
+<div class="sm-tickets-wrapper" dir="rtl" style="display: flex; gap: 25px; min-height: 700px; font-family: 'Rubik', sans-serif;">
 
-    <!-- Sidebar -->
-    <div class="sm-msg-sidebar" style="width: 350px; background: #fff; border-left: 1px solid var(--sm-border-color); display: flex; flex-direction: column;">
-        <div style="padding: 20px; border-bottom: 1px solid #f0f2f5; background: var(--sm-dark-color); color: #fff;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h2 style="margin:0; font-size: 1.2em; font-weight: 800; color:#fff;">المراسلات</h2>
-                <div style="background: var(--sm-primary-color); padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 700;"><?php echo esc_html($gov_label); ?></div>
-            </div>
-            <?php if ($is_official): ?>
-                <div style="position: relative;">
-                    <span class="dashicons dashicons-search" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 18px;"></span>
-                    <input type="text" id="sm-msg-search" placeholder="بحث عن عضو..." style="width: 100%; padding: 10px 40px 10px 15px; border-radius: 8px; border: none; background: rgba(255,255,255,0.1); color: #fff; font-size: 13px;">
-                </div>
+    <!-- Sidebar: Filters & Actions -->
+    <div class="sm-tickets-sidebar" style="width: 280px; flex-shrink: 0;">
+        <div style="background: #fff; border-radius: 15px; border: 1px solid var(--sm-border-color); padding: 25px; box-shadow: var(--sm-shadow); position: sticky; top: 20px;">
+            <?php if ($is_member): ?>
+                <button onclick="smOpenCreateTicketModal()" class="sm-btn" style="width: 100%; height: 45px; font-weight: 700; margin-bottom: 25px; box-shadow: 0 4px 12px rgba(246, 48, 73, 0.2);">
+                    <span class="dashicons dashicons-plus-alt" style="margin-top: 4px;"></span> تذكرة جديدة
+                </button>
             <?php endif; ?>
-        </div>
 
-        <div id="sm-conversations-list" style="flex: 1; overflow-y: auto;">
-            <!-- Loaded via JS -->
-            <div style="text-align: center; padding: 40px; color: #94a3b8;">
-                <div class="sm-loader-mini"></div>
-                <p style="margin-top: 10px; font-size: 13px;">جاري تحميل البيانات...</p>
+            <h4 style="margin: 0 0 15px 0; font-size: 14px; color: var(--sm-dark-color); font-weight: 800; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;">تصفية التذاكر</h4>
+
+            <div class="sm-form-group">
+                <label class="sm-label" style="font-size: 12px;">الحالة:</label>
+                <select id="filter-status" class="sm-select" onchange="smLoadTickets()">
+                    <option value="">الكل</option>
+                    <?php foreach($statuses as $k => $v) echo "<option value='$k'>{$v['label']}</option>"; ?>
+                </select>
+            </div>
+
+            <div class="sm-form-group">
+                <label class="sm-label" style="font-size: 12px;">القسم:</label>
+                <select id="filter-category" class="sm-select" onchange="smLoadTickets()">
+                    <option value="">كل الأقسام</option>
+                    <?php foreach($categories as $k => $v) echo "<option value='$k'>{$v['label']}</option>"; ?>
+                </select>
+            </div>
+
+            <div class="sm-form-group">
+                <label class="sm-label" style="font-size: 12px;">البحث:</label>
+                <div style="position: relative;">
+                    <input type="text" id="filter-search" class="sm-input" placeholder="رقم التذكرة أو الموضوع..." oninput="smLoadTickets()" style="padding-left: 35px;">
+                    <span class="dashicons dashicons-search" style="position: absolute; left: 10px; top: 10px; color: #94a3b8; font-size: 18px;"></span>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Main Chat -->
-    <div class="sm-msg-main" style="flex: 1; display: flex; flex-direction: column; background: #fff; position: relative;">
-
-        <!-- Welcome Screen (if no conversation selected) -->
-        <div id="sm-msg-welcome" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; text-align: center; color: #94a3b8;">
-            <div style="width: 120px; height: 120px; background: #f8fafc; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
-                <span class="dashicons dashicons-format-chat" style="font-size: 60px; width: 60px; height: 60px; color: #cbd5e0;"></span>
+    <!-- Main Content: Tickets List / Details -->
+    <div class="sm-tickets-main" style="flex: 1;">
+        <div id="tickets-list-container">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                <h2 style="margin: 0; font-weight: 800; color: var(--sm-dark-color);">نظام التذاكر والدعم الفني</h2>
+                <div style="font-size: 13px; color: #64748b;">
+                    <?php if ($is_admin): ?>
+                        <span class="sm-badge sm-badge-mid">كامل النظام</span>
+                    <?php elseif ($is_officer): ?>
+                        <span class="sm-badge sm-badge-mid">لجنة محافظة: <?php echo esc_html(SM_Settings::get_governorates()[$member_gov] ?? $member_gov); ?></span>
+                    <?php endif; ?>
+                </div>
             </div>
-            <h3 style="color: var(--sm-dark-color); margin-bottom: 10px;">مركز التواصل النقابي الموحد</h3>
-            <p style="max-width: 400px; font-size: 14px; line-height: 1.6;">تواصل بشكل مباشر مع مسؤولي اللجنة الفرعية لمحافظتك. جميع المراسلات مشفرة وآمنة.</p>
-        </div>
 
-        <!-- Chat Header -->
-        <div id="sm-msg-header" style="display: none; padding: 15px 30px; border-bottom: 1px solid #f0f2f5; background: #fff; z-index: 10; min-height: 80px; align-items: center;">
-            <div style="display: flex; align-items: center; gap: 15px; width: 100%;">
-                <button id="sm-msg-back" class="sm-mobile-only" style="background:none; border:none; color:var(--sm-primary-color); cursor:pointer;"><span class="dashicons dashicons-arrow-right-alt2"></span></button>
-                <div id="sm-header-avatar" style="width: 45px; height: 45px; border-radius: 50%; overflow: hidden; background: #f1f5f9; border: 2px solid var(--sm-primary-color);"></div>
-                <div style="flex: 1;">
-                    <h3 id="sm-header-name" style="margin:0; font-size: 1.1em; font-weight: 800; color: var(--sm-dark-color);"></h3>
-                    <div style="display: flex; align-items: center; gap: 5px; font-size: 11px; color: #38a169; font-weight: 600;">
-                        <span style="width: 8px; height: 8px; background: #38a169; border-radius: 50%;"></span>
-                        متصل باللجنة النقابية | <span id="sm-header-ticket-id" style="color: #64748b;"></span>
-                    </div>
-                </div>
-                <div style="display: flex; gap: 10px;">
-                    <button onclick="location.reload()" title="تحديث" style="background: #f1f5f9; border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; color: #64748b;"><span class="dashicons dashicons-update"></span></button>
-                </div>
+            <div id="sm-tickets-grid" style="display: grid; gap: 15px;">
+                <!-- Loaded via JS -->
             </div>
         </div>
 
-        <!-- Messages Area -->
-        <div id="sm-msg-body" style="display: none; flex: 1; padding: 30px; overflow-y: auto; background: #f0f2f5; display: flex; flex-direction: column; gap: 10px;">
-            <!-- Messages load here -->
-        </div>
-
-        <!-- Input Area -->
-        <div id="sm-msg-footer" style="display: none; padding: 20px 30px; background: #fff; border-top: 1px solid #f0f2f5;">
-            <form id="sm-msg-form" style="display: flex; flex-direction: column; gap: 12px;">
-                <input type="hidden" name="member_id" id="sm_chat_member_id">
-                <input type="hidden" name="receiver_id" id="sm_chat_receiver_id">
-
-                <div id="sm-file-preview" style="display: none; background: #f8fafc; padding: 10px 15px; border-radius: 8px; border: 1px solid var(--sm-border-color); display: flex; align-items: center; justify-content: space-between;">
-                    <div style="display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--sm-primary-color); font-weight: 600;">
-                        <span class="dashicons dashicons-paperclip"></span>
-                        <span id="sm-file-name"></span>
-                    </div>
-                    <button type="button" onclick="clearFile()" style="background: none; border: none; color: #ef4444; cursor: pointer;"><span class="dashicons dashicons-no-alt"></span></button>
-                </div>
-
-                <div style="display: flex; gap: 15px; align-items: flex-end;">
-                    <div style="flex: 1; position: relative;">
-                        <textarea id="sm-msg-input" name="message" placeholder="اكتب رسالتك هنا... (Shift + Enter لسطر جديد)" style="width: 100%; min-height: 50px; max-height: 150px; padding: 12px 100px 12px 20px; border-radius: 25px; border: 1px solid var(--sm-border-color); background: #f8fafc; resize: none; font-size: 14px; transition: 0.3s;"></textarea>
-
-                        <div style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); display: flex; gap: 8px;">
-                            <label for="sm_msg_file" style="cursor: pointer; width: 36px; height: 36px; background: #fff; border: 1px solid #e2e8f0; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #64748b; transition: 0.2s;">
-                                <span class="dashicons dashicons-paperclip"></span>
-                            </label>
-                            <input type="file" id="sm_msg_file" name="message_file" style="display: none;" onchange="handleFileSelect(this)">
-                        </div>
-                    </div>
-                    <button type="submit" id="sm-msg-submit" style="width: 50px; height: 50px; border-radius: 50%; background: var(--sm-primary-color); border: none; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.3s; box-shadow: 0 4px 12px rgba(246, 48, 73, 0.3);">
-                        <span class="dashicons dashicons-send" style="transform: rotate(180deg); margin-bottom: 2px;"></span>
-                    </button>
-                </div>
-            </form>
+        <div id="ticket-details-container" style="display: none;">
+            <!-- Loaded via JS -->
         </div>
     </div>
 </div>
 
-<style>
-.sm-loader-mini { border: 3px solid #f3f3f3; border-top: 3px solid var(--sm-primary-color); border-radius: 50%; width: 24px; height: 24px; animation: sm-spin 1s linear infinite; display: inline-block; }
-@keyframes sm-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-.sm-conv-item { padding: 15px 20px; cursor: pointer; border-bottom: 1px solid #f8fafc; transition: 0.2s; display: flex; align-items: center; gap: 15px; }
-.sm-conv-item:hover { background: #f8fafc; }
-.sm-conv-item.active { background: #fff1f2; border-right: 4px solid var(--sm-primary-color); }
-.sm-conv-avatar { width: 50px; height: 50px; border-radius: 50%; background: #f1f5f9; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; }
-.sm-conv-info { flex: 1; min-width: 0; }
-.sm-conv-name { font-weight: 800; font-size: 14px; color: var(--sm-dark-color); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.sm-conv-last { font-size: 12px; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-.sm-msg-bubble { max-width: 80%; padding: 12px 18px; border-radius: 18px; font-size: 14px; line-height: 1.6; position: relative; margin-bottom: 5px; }
-.sm-msg-sent { align-self: flex-end; background: var(--sm-primary-color); color: #fff; border-bottom-left-radius: 4px; }
-.sm-msg-received { align-self: flex-start; background: #fff; color: var(--sm-dark-color); border-bottom-right-radius: 4px; border: 1px solid #e2e8f0; }
-.sm-msg-meta { font-size: 10px; margin-top: 5px; opacity: 0.7; display: flex; align-items: center; gap: 4px; }
-.sm-msg-sent .sm-msg-meta { justify-content: flex-end; }
-.sm-msg-received .sm-msg-meta { justify-content: flex-start; }
-
-.sm-file-card { display: block; margin-top: 10px; padding: 12px; background: rgba(0,0,0,0.05); border-radius: 10px; border: 1px solid rgba(0,0,0,0.1); text-decoration: none !important; color: inherit !important; }
-.sm-msg-sent .sm-file-card { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); }
-
-#sm-msg-input:focus { border-color: var(--sm-primary-color); outline: none; box-shadow: 0 0 0 3px rgba(246, 48, 73, 0.1); background: #fff; }
-
-.sm-msg-bubble {
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-    clear: both;
-}
-
-.sm-pulse { animation: sm-pulse-red 2s infinite; }
-@keyframes sm-pulse-red { 0% { box-shadow: 0 0 0 0 rgba(246, 48, 73, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(246, 48, 73, 0); } 100% { box-shadow: 0 0 0 0 rgba(246, 48, 73, 0); } }
-
-.sm-mobile-only { display: none; }
-@media (max-width: 768px) {
-    .sm-mobile-only { display: block; }
-    .sm-msg-sidebar { width: 100% !important; border-left: none !important; }
-    .sm-msg-main { display: none !important; }
-    .sm-messaging-wrapper.chat-active .sm-msg-sidebar { display: none !important; }
-    .sm-messaging-wrapper.chat-active .sm-msg-main { display: flex !important; width: 100% !important; }
-}
-</style>
+<!-- Modal: Create Ticket -->
+<div id="create-ticket-modal" class="sm-modal-overlay">
+    <div class="sm-modal-content" style="max-width: 600px;">
+        <div class="sm-modal-header">
+            <h3>فتح تذكرة دعم جديدة</h3>
+            <button class="sm-modal-close" onclick="document.getElementById('create-ticket-modal').style.display='none'">&times;</button>
+        </div>
+        <form id="create-ticket-form" style="padding: 20px;">
+            <div class="sm-form-group">
+                <label class="sm-label">موضوع التذكرة:</label>
+                <input type="text" name="subject" class="sm-input" required placeholder="مثال: مشكلة في تحديث البيانات">
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="sm-form-group">
+                    <label class="sm-label">القسم:</label>
+                    <select name="category" class="sm-select" required>
+                        <?php foreach($categories as $k => $v) echo "<option value='$k'>{$v['label']}</option>"; ?>
+                    </select>
+                </div>
+                <div class="sm-form-group">
+                    <label class="sm-label">الأولوية:</label>
+                    <select name="priority" class="sm-select">
+                        <option value="low">منخفضة</option>
+                        <option value="medium" selected>متوسطة</option>
+                        <option value="high">عالية / عاجل</option>
+                    </select>
+                </div>
+            </div>
+            <div class="sm-form-group">
+                <label class="sm-label">تفاصيل المشكلة / الطلب:</label>
+                <textarea name="message" class="sm-textarea" rows="5" required placeholder="يرجى شرح طلبك بالتفصيل..."></textarea>
+            </div>
+            <div class="sm-form-group">
+                <label class="sm-label">مرفقات (اختياري):</label>
+                <input type="file" name="attachment" class="sm-input">
+                <p style="font-size: 11px; color: #64748b; margin-top: 5px;">يسمح بملفات الصور و PDF (بحد أقصى 5 ميجابايت)</p>
+            </div>
+            <button type="submit" class="sm-btn" style="width: 100%; height: 45px; font-weight: 700; margin-top: 10px;">إرسال التذكرة</button>
+        </form>
+    </div>
+</div>
 
 <script>
 (function($) {
-    let currentActiveMemberId = null;
-    let pollInterval = null;
-    let fetchingMessages = false;
+    const categories = <?php echo json_encode($categories); ?>;
+    const statuses = <?php echo json_encode($statuses); ?>;
+    const priorities = <?php echo json_encode($priorities); ?>;
     const isOfficial = <?php echo $is_official ? 'true' : 'false'; ?>;
-    const myId = <?php echo $my_id; ?>;
-    const myMemberId = <?php echo $member_id; ?>;
-    const myGovLabel = "<?php echo esc_js($gov_label); ?>";
+    const currentUserId = <?php echo $my_id; ?>;
 
-    window.handleFileSelect = function(input) {
-        if (input.files && input.files[0]) {
-            const file = input.files[0];
-            const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/gif'];
-            if (!allowedTypes.includes(file.type)) {
-                alert('عذراً، يسمح فقط بملفات PDF والصور (JPG, PNG, GIF).');
-                input.value = '';
-                return;
-            }
-            if (file.size > 5 * 1024 * 1024) {
-                alert('عذراً، الحد الأقصى لحجم الملف هو 5 ميجابايت.');
-                input.value = '';
-                return;
-            }
-            $('#sm-file-name').text(file.name);
-            $('#sm-file-preview').fadeIn();
-        }
+    window.smOpenCreateTicketModal = function() {
+        $('#create-ticket-form')[0].reset();
+        $('#create-ticket-modal').fadeIn().css('display', 'flex');
     };
 
-    window.clearFile = function() {
-        $('#sm_msg_file').val('');
-        $('#sm-file-preview').fadeOut();
-    };
+    window.smLoadTickets = function() {
+        const grid = $('#sm-tickets-grid');
+        grid.css('opacity', '0.5');
 
-    window.loadConversations = function() {
-        const listContainer = $('#sm-conversations-list');
+        const status = $('#filter-status').val();
+        const category = $('#filter-category').val();
+        const search = $('#filter-search').val();
+        const nonce = '<?php echo wp_create_nonce("sm_ticket_action"); ?>';
 
-        if (!isOfficial) {
-            // For members, show the Committee and assigned officials
-            listContainer.empty();
-            const formData = new FormData();
-            formData.append('action', 'sm_get_conversations_ajax');
-            formData.append('nonce', '<?php echo wp_create_nonce("sm_message_action"); ?>');
-
-            fetch('<?php echo admin_url('admin-ajax.php'); ?>', { method: 'POST', body: formData })
-            .then(r => r.json())
-            .then(res => {
-                listContainer.empty();
-                // Add Committee Item
-                const committeeItem = $(`
-                    <div class="sm-conv-item active" onclick="selectConversation(${myMemberId}, 'اللجنة النقابية بمحافظة ${myGovLabel}', 0, this)">
-                        <div class="sm-conv-avatar" style="background: var(--sm-dark-color); color: #fff;">
-                            <span class="dashicons dashicons-building"></span>
-                        </div>
-                        <div class="sm-conv-info">
-                            <div class="sm-conv-name">اللجنة النقابية بمحافظة ${myGovLabel}</div>
-                            <div class="sm-conv-last">قناة التواصل الرسمية المباشرة</div>
-                        </div>
-                    </div>
-                `);
-                listContainer.append(committeeItem);
-
-                // Add assigned officials
-                if (res.success && res.data.officials) {
-                    res.data.officials.forEach(o => {
-                        const off = o.official;
-                        const item = $(`
-                            <div class="sm-conv-item" style="border-right: 2px solid #e2e8f0; margin-right: 10px;" title="مسؤول باللجنة" onclick="selectConversation(${myMemberId}, '${off.display_name}', ${off.ID}, this)">
-                                <div class="sm-conv-avatar" style="width:35px; height:35px;">
-                                    <img src="${off.avatar}" style="width:100%;">
-                                </div>
-                                <div class="sm-conv-info">
-                                    <div class="sm-conv-name" style="font-size:12px;">${off.display_name}</div>
-                                    <div class="sm-conv-last" style="font-size:10px;">مسؤول اللجنة الفرعية</div>
-                                </div>
-                            </div>
-                        `);
-                        listContainer.append(item);
-                    });
-                }
-
-                // Auto-load committee for members
-                selectConversation(myMemberId, `اللجنة النقابية بمحافظة ${myGovLabel}`, 0);
-            });
-            return;
-        }
-
-        // For officials, load member tickets
-        const formData = new FormData();
-        formData.append('action', 'sm_get_conversations_ajax');
-        formData.append('nonce', '<?php echo wp_create_nonce("sm_message_action"); ?>');
-
-        fetch('<?php echo admin_url('admin-ajax.php'); ?>', { method: 'POST', body: formData })
+        fetch(ajaxurl + `?action=sm_get_tickets&status=${status}&category=${category}&search=${search}&nonce=${nonce}&t=${Date.now()}`)
         .then(r => r.json())
         .then(res => {
-            listContainer.empty();
-            if (res.success && res.data.conversations && res.data.conversations.length > 0) {
-                res.data.conversations.forEach(c => {
-                    const activeClass = (currentActiveMemberId == c.member.id) ? 'active' : '';
-                    const avatar = c.member.avatar || 'https://www.gravatar.com/avatar/?d=mp';
-                    const item = $(`
-                        <div class="sm-conv-item ${activeClass}" data-member-id="${c.member.id}" onclick="selectConversation(${c.member.id}, '${c.member.name}', ${c.member.wp_user_id}, this)">
-                            <div class="sm-conv-avatar">
-                                <img src="${avatar}" style="width:100%; height:100%; object-fit:cover;">
+            grid.css('opacity', '1').empty();
+            if (res.success && res.data.length > 0) {
+                res.data.forEach(t => {
+                    const cat = categories[t.category] || categories['other'];
+                    const stat = statuses[t.status];
+                    const priorityLabel = priorities[t.priority];
+
+                    const card = $(`
+                        <div class="sm-ticket-card" onclick="smViewTicket(${t.id})" style="background: #fff; border: 1px solid var(--sm-border-color); border-radius: 12px; padding: 20px; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 20px;">
+                            <div style="width: 50px; height: 50px; border-radius: 50%; background: #f1f5f9; display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; border: 1px solid #e2e8f0;">
+                                ${t.member_photo ? `<img src="${t.member_photo}" style="width: 100%; height: 100%; object-fit: cover;">` : `<span class="dashicons dashicons-admin-users" style="color: #94a3b8;"></span>`}
                             </div>
-                            <div class="sm-conv-info">
-                                <div class="sm-conv-name">${c.member.name}</div>
-                                <div class="sm-conv-last">${c.last_message ? c.last_message.message : 'لا يوجد رسائل'}</div>
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
+                                    <span style="font-size: 10px; font-weight: 700; color: #94a3b8;">#${t.id}</span>
+                                    <h4 style="margin: 0; font-size: 15px; font-weight: 700; color: var(--sm-dark-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${t.subject}</h4>
+                                    <span style="background: ${cat.color}; color: ${cat.text}; padding: 2px 10px; border-radius: 20px; font-size: 10px; font-weight: 700;">${cat.label}</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 15px; font-size: 12px; color: #64748b;">
+                                    <span style="font-weight: 600;">${t.member_name}</span>
+                                    <span>•</span>
+                                    <span>${t.updated_at}</span>
+                                </div>
+                            </div>
+                            <div style="text-align: left; flex-shrink: 0;">
+                                <div class="sm-badge ${stat.class}" style="margin-bottom: 5px;">${stat.label}</div>
+                                <div style="font-size: 10px; color: ${t.priority === 'high' ? '#e53e3e' : '#94a3b8'}; font-weight: 700;">الأولوية: ${priorityLabel}</div>
                             </div>
                         </div>
                     `);
-                    listContainer.append(item);
+                    grid.append(card);
                 });
             } else {
-                listContainer.html('<div style="text-align:center; padding:40px; color:#94a3b8; font-size:13px;">لا توجد طلبات أو استفسارات حالياً</div>');
+                grid.html('<div style="text-align: center; padding: 50px; background: #fff; border-radius: 12px; border: 1px dashed #cbd5e0; color: #94a3b8;">لا توجد تذاكر حالياً تتطابق مع البحث.</div>');
             }
         });
     };
 
-    window.selectConversation = function(memberId, name, wpUserId, element) {
-        currentActiveMemberId = memberId;
+    window.smViewTicket = function(id) {
+        $('#tickets-list-container').hide();
+        const container = $('#ticket-details-container').show().html('<div style="text-align: center; padding: 100px;"><div class="sm-loader-mini"></div></div>');
+        const nonce = '<?php echo wp_create_nonce("sm_ticket_action"); ?>';
 
-        $('.sm-conv-item').removeClass('active sm-pulse');
-        if (element) $(element).addClass('active');
-
-        $('.sm-messaging-wrapper').addClass('chat-active');
-        $('#sm-msg-welcome').hide();
-        $('#sm-msg-header, #sm-msg-body, #sm-msg-footer').show();
-
-        $('#sm-header-name').text(name);
-        $('#sm-header-ticket-id').text('تذكرة رقم: #' + memberId);
-
-        // Find avatar from element if possible or use gravatar as fallback
-        const avatarUrl = $(element).find('img').attr('src') || `https://www.gravatar.com/avatar/${wpUserId}?d=mp`;
-        $('#sm-header-avatar').html(`<img src="${avatarUrl}" style="width:100%; height:100%; object-fit:cover;">`);
-
-        $('#sm_chat_member_id').val(memberId);
-        $('#sm_chat_receiver_id').val(isOfficial ? wpUserId : 0);
-
-        fetchMessages(memberId);
-
-        if (pollInterval) clearInterval(pollInterval);
-
-        const startPolling = (ms) => {
-            if (pollInterval) clearInterval(pollInterval);
-            pollInterval = setInterval(() => {
-                if (!document.hidden) fetchMessages(memberId, true);
-            }, ms);
-        };
-
-        startPolling(4000);
-
-        $(window).off('focus blur').on('focus', () => startPolling(4000)).on('blur', () => startPolling(15000));
-    };
-
-    $('#sm-msg-back').on('click', () => {
-        $('.sm-messaging-wrapper').removeClass('chat-active');
-    });
-
-    window.fetchMessages = function(memberId, isPolling = false) {
-        if (fetchingMessages) return;
-        fetchingMessages = true;
-
-        const body = $('#sm-msg-body');
-        if (!isPolling) body.html('<div style="text-align:center; padding:50px;"><div class="sm-loader-mini"></div></div>');
-
-        const formData = new FormData();
-        formData.append('action', 'sm_get_conversation_ajax');
-        formData.append('member_id', memberId);
-        formData.append('nonce', '<?php echo wp_create_nonce("sm_message_action"); ?>');
-
-        fetch('<?php echo admin_url('admin-ajax.php'); ?>', { method: 'POST', body: formData })
+        fetch(ajaxurl + `?action=sm_get_ticket_details&id=${id}&nonce=${nonce}`)
         .then(r => r.json())
         .then(res => {
-            fetchingMessages = false;
             if (res.success) {
-                let html = '';
-                res.data.forEach(m => {
-                    const isSent = m.sender_id == myId;
+                const t = res.data.ticket;
+                const thread = res.data.thread;
+                const cat = categories[t.category] || categories['other'];
+                const stat = statuses[t.status];
+
+                let threadHtml = '';
+                thread.forEach(m => {
+                    const isMe = m.sender_id == currentUserId;
                     let fileHtml = '';
                     if (m.file_url) {
                         const fileName = m.file_url.split('/').pop();
-                        const isImg = m.file_url.match(/\.(jpg|jpeg|png|gif|webp)$/i);
-                        if (isImg) {
-                            fileHtml = `<a href="${m.file_url}" target="_blank" class="sm-file-card"><img src="${m.file_url}" style="max-width:200px; border-radius:8px; display:block; margin-bottom:5px;"><span>${fileName}</span></a>`;
-                        } else {
-                            fileHtml = `<a href="${m.file_url}" target="_blank" class="sm-file-card"><span class="dashicons dashicons-pdf" style="vertical-align:middle; margin-left:5px;"></span> ${fileName}</a>`;
-                        }
+                        fileHtml = `<a href="${m.file_url}" target="_blank" style="display: inline-flex; align-items: center; gap: 5px; margin-top: 10px; padding: 8px 12px; background: rgba(0,0,0,0.05); border-radius: 8px; text-decoration: none; color: inherit; font-size: 12px;">
+                            <span class="dashicons dashicons-paperclip"></span> ${fileName}
+                        </a>`;
                     }
 
-                    html += `
-                        <div class="sm-msg-bubble ${isSent ? 'sm-msg-sent' : 'sm-msg-received'}">
-                            <div style="font-weight:800; font-size:11px; margin-bottom:5px; opacity:0.9;">${m.sender_name || 'مستخدم'}</div>
-                            <div style="word-break: break-word;">${m.message}</div>
-                            ${fileHtml}
-                            <div class="sm-msg-meta">
-                                <span>${m.created_at}</span>
-                                ${isSent ? '<span class="dashicons dashicons-yes" style="font-size:14px; width:14px; height:14px;"></span>' : ''}
+                    threadHtml += `
+                        <div style="display: flex; flex-direction: column; align-items: ${isMe ? 'flex-end' : 'flex-start'}; margin-bottom: 20px;">
+                            <div style="background: ${isMe ? 'var(--sm-primary-color)' : '#fff'}; color: ${isMe ? '#fff' : 'inherit'}; padding: 15px 20px; border-radius: 15px; border-bottom-${isMe ? 'left' : 'right'}-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: ${isMe ? 'none' : '1px solid #e2e8f0'}; max-width: 80%;">
+                                <div style="font-weight: 800; font-size: 11px; margin-bottom: 5px; opacity: 0.8;">${m.sender_name} • ${m.created_at}</div>
+                                <div style="font-size: 14px; line-height: 1.6; white-space: pre-wrap;">${m.message}</div>
+                                ${fileHtml}
                             </div>
                         </div>
                     `;
                 });
 
-                const oldHtml = body.data('current-html');
-                if (oldHtml !== html) {
-                    body.html(html).data('current-html', html);
-                    body.scrollTop(body[0].scrollHeight);
+                container.html(`
+                    <div style="background: #fff; border-radius: 15px; border: 1px solid var(--sm-border-color); overflow: hidden; box-shadow: var(--sm-shadow);">
+                        <div style="padding: 20px 30px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; background: #fafafa;">
+                            <div style="display: flex; align-items: center; gap: 15px;">
+                                <button onclick="smBackToList()" class="sm-btn sm-btn-outline" style="width: auto; padding: 5px 10px;"><span class="dashicons dashicons-arrow-right-alt2"></span> العودة</button>
+                                <div>
+                                    <h3 style="margin: 0; font-weight: 800; color: var(--sm-dark-color);">${t.subject}</h3>
+                                    <div style="display: flex; align-items: center; gap: 10px; font-size: 12px; color: #64748b; margin-top: 5px;">
+                                        <span>تذكرة رقم: #${t.id}</span>
+                                        <span>•</span>
+                                        <span style="background: ${cat.color}; color: ${cat.text}; padding: 1px 8px; border-radius: 10px; font-weight: 700;">${cat.label}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <span class="sm-badge ${stat.class}">${stat.label}</span>
+                                ${isOfficial && t.status !== 'closed' ? `<button onclick="smCloseTicket(${t.id})" class="sm-btn" style="background: #e53e3e; width: auto; padding: 5px 15px; font-size: 12px;">إغلاق التذكرة</button>` : ''}
+                            </div>
+                        </div>
 
-                    if (isPolling && !$('.sm-conv-item.active').length) {
-                         $(`.sm-conv-item[data-member-id="${memberId}"]`).addClass('sm-pulse');
-                    }
-                }
+                        <div style="padding: 30px; background: #f8fafc; max-height: 500px; overflow-y: auto;" id="ticket-thread-body">
+                            ${threadHtml}
+                        </div>
+
+                        ${t.status !== 'closed' ? `
+                            <div style="padding: 25px 30px; border-top: 1px solid #f1f5f9;">
+                                <form id="ticket-reply-form" style="display: flex; flex-direction: column; gap: 15px;">
+                                    <input type="hidden" name="ticket_id" value="${t.id}">
+                                    <textarea name="message" class="sm-textarea" rows="3" required placeholder="اكتب ردك هنا..."></textarea>
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <input type="file" name="attachment" style="font-size: 12px;">
+                                        <button type="submit" class="sm-btn" style="width: auto; padding: 0 30px; height: 40px;">إرسال الرد</button>
+                                    </div>
+                                </form>
+                            </div>
+                        ` : `
+                            <div style="padding: 20px; text-align: center; background: #fff5f5; color: #c53030; font-weight: 700; font-size: 14px;">هذه التذكرة مغلقة. لا يمكنك إضافة ردود جديدة.</div>
+                        `}
+                    </div>
+
+                    <div style="margin-top: 20px; background: #fff; border-radius: 15px; border: 1px solid var(--sm-border-color); padding: 20px; box-shadow: var(--sm-shadow);">
+                        <h4 style="margin: 0 0 15px 0; border-bottom: 1px solid #eee; padding-bottom: 10px;">بيانات مقدم الطلب</h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; font-size: 13px;">
+                            <div><label style="color: #94a3b8; display: block;">الاسم:</label><strong>${t.member_name}</strong></div>
+                            <div><label style="color: #94a3b8; display: block;">المحافظة:</label><strong>${t.member_province}</strong></div>
+                            <div><label style="color: #94a3b8; display: block;">رقم الهاتف:</label><strong>${t.member_phone}</strong></div>
+                            <div><label style="color: #94a3b8; display: block;">تاريخ الفتح:</label><strong>${t.created_at}</strong></div>
+                        </div>
+                    </div>
+                `);
+
+                const threadBody = $('#ticket-thread-body');
+                threadBody.scrollTop(threadBody[0].scrollHeight);
+
+                $('#ticket-reply-form').on('submit', function(e) {
+                    e.preventDefault();
+                    const btn = $(this).find('button[type="submit"]');
+                    btn.prop('disabled', true).text('جاري الإرسال...');
+
+                    const fd = new FormData(this);
+                    fd.append('action', 'sm_add_ticket_reply');
+                    fd.append('nonce', '<?php echo wp_create_nonce("sm_ticket_action"); ?>');
+
+                    fetch(ajaxurl, { method: 'POST', body: fd })
+                    .then(r => r.json())
+                    .then(res => {
+                        if (res.success) {
+                            smViewTicket(t.id);
+                        } else alert('خطأ: ' + res.data);
+                    });
+                });
             }
         });
-    }
+    };
 
-    $('#sm-msg-form').on('submit', function(e) {
-        e.preventDefault();
-        const btn = $('#sm-msg-submit');
-        const input = $('#sm-msg-input');
-        if (!input.val().trim() && !$('#sm_msg_file').val()) return;
+    window.smBackToList = function() {
+        $('#ticket-details-container').hide();
+        $('#tickets-list-container').show();
+        smLoadTickets();
+    };
 
-        btn.prop('disabled', true).css('opacity', '0.6');
+    window.smCloseTicket = function(id) {
+        if (!confirm('هل أنت متأكد من إغلاق هذه التذكرة بشكل نهائي؟')) return;
+        const fd = new FormData();
+        fd.append('action', 'sm_close_ticket');
+        fd.append('id', id);
+        fd.append('nonce', '<?php echo wp_create_nonce("sm_ticket_action"); ?>');
 
-        const formData = new FormData(this);
-        formData.append('action', 'sm_send_message_ajax');
-        formData.append('nonce', '<?php echo wp_create_nonce("sm_message_action"); ?>');
-
-        fetch('<?php echo admin_url('admin-ajax.php'); ?>', { method: 'POST', body: formData })
+        fetch(ajaxurl, { method: 'POST', body: fd })
         .then(r => r.json())
         .then(res => {
-            btn.prop('disabled', false).css('opacity', '1');
             if (res.success) {
-                input.val('').css('height', '50px');
-                clearFile();
-                fetchingMessages = false;
-                fetchMessages($('#sm_chat_member_id').val());
+                smViewTicket(id);
             } else alert('خطأ: ' + res.data);
-        })
-        .catch(err => {
-            btn.prop('disabled', false).css('opacity', '1');
-            fetchingMessages = false;
-            console.error(err);
+        });
+    };
+
+    $('#create-ticket-form').on('submit', function(e) {
+        e.preventDefault();
+        const btn = $(this).find('button[type="submit"]');
+        btn.prop('disabled', true).text('جاري الإرسال...');
+
+        const fd = new FormData(this);
+        fd.append('action', 'sm_create_ticket');
+        fd.append('nonce', '<?php echo wp_create_nonce("sm_ticket_action"); ?>');
+
+        fetch(ajaxurl, { method: 'POST', body: fd })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                $('#create-ticket-modal').fadeOut();
+                smLoadTickets();
+                smViewTicket(res.data);
+            } else {
+                alert('خطأ: ' + res.data);
+                btn.prop('disabled', false).text('إرسال التذكرة');
+            }
         });
     });
 
-    // Enter to Send
-    $('#sm-msg-input').on('keydown', function(e) {
-        if (e.which == 13 && !e.shiftKey) {
-            e.preventDefault();
-            $('#sm-msg-form').submit();
-        }
-    });
-
-    // Sidebar Search
-    $('#sm-msg-search').on('input', function() {
-        const val = $(this).val().toLowerCase();
-        $('.sm-conv-item').each(function() {
-            const text = $(this).find('.sm-conv-name').text().toLowerCase();
-            $(this).toggle(text.indexOf(val) > -1);
-        });
-    });
-
-    // Auto-resize textarea
-    $('#sm-msg-input').on('input', function() {
-        this.style.height = 'auto';
-        this.style.height = (this.scrollHeight) + 'px';
-    });
-
-    loadConversations();
+    smLoadTickets();
 
 })(jQuery);
 </script>
+
+<style>
+.sm-ticket-card:hover {
+    border-color: var(--sm-primary-color) !important;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+    transform: translateY(-2px);
+}
+.sm-loader-mini { border: 3px solid #f3f3f3; border-top: 3px solid var(--sm-primary-color); border-radius: 50%; width: 24px; height: 24px; animation: sm-spin 1s linear infinite; display: inline-block; }
+@keyframes sm-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+</style>

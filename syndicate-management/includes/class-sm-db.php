@@ -902,4 +902,127 @@ class SM_DB {
             $format, $id
         ));
     }
+
+    // Ticketing System Methods
+    public static function create_ticket($data) {
+        global $wpdb;
+        $res = $wpdb->insert("{$wpdb->prefix}sm_tickets", array(
+            'member_id' => intval($data['member_id']),
+            'subject' => sanitize_text_field($data['subject']),
+            'category' => sanitize_text_field($data['category']),
+            'priority' => sanitize_text_field($data['priority'] ?? 'medium'),
+            'status' => 'open',
+            'province' => sanitize_text_field($data['province']),
+            'created_at' => current_time('mysql'),
+            'updated_at' => current_time('mysql')
+        ));
+        if ($res) {
+            $ticket_id = $wpdb->insert_id;
+            // Add initial message to thread
+            self::add_ticket_reply(array(
+                'ticket_id' => $ticket_id,
+                'sender_id' => get_current_user_id(),
+                'message' => $data['message'],
+                'file_url' => $data['file_url'] ?? null
+            ));
+            return $ticket_id;
+        }
+        return false;
+    }
+
+    public static function add_ticket_reply($data) {
+        global $wpdb;
+        $res = $wpdb->insert("{$wpdb->prefix}sm_ticket_thread", array(
+            'ticket_id' => intval($data['ticket_id']),
+            'sender_id' => intval($data['sender_id']),
+            'message' => sanitize_textarea_field($data['message']),
+            'file_url' => $data['file_url'] ?? null,
+            'created_at' => current_time('mysql')
+        ));
+        if ($res) {
+            $wpdb->update("{$wpdb->prefix}sm_tickets", array('updated_at' => current_time('mysql')), array('id' => intval($data['ticket_id'])));
+            return $wpdb->insert_id;
+        }
+        return false;
+    }
+
+    public static function get_tickets($args = array()) {
+        global $wpdb;
+        $user = wp_get_current_user();
+        $is_sys_admin = in_array('sm_system_admin', $user->roles) || in_array('administrator', $user->roles);
+        $is_officer = in_array('sm_syndicate_admin', $user->roles);
+        $is_member = in_array('sm_syndicate_member', $user->roles);
+
+        $where = "1=1";
+        $params = array();
+
+        if ($is_officer && !$is_sys_admin) {
+            $gov = get_user_meta($user->ID, 'sm_governorate', true);
+            if ($gov) {
+                $where .= " AND t.province = %s";
+                $params[] = $gov;
+            }
+        } elseif ($is_member) {
+            // Find member_id from wp_user_id
+            $member_id = $wpdb->get_var($wpdb->prepare("SELECT id FROM {$wpdb->prefix}sm_members WHERE wp_user_id = %d", $user->ID));
+            $where .= " AND t.member_id = %d";
+            $params[] = intval($member_id);
+        }
+
+        if (!empty($args['status'])) {
+            $where .= " AND t.status = %s";
+            $params[] = sanitize_text_field($args['status']);
+        }
+
+        if (!empty($args['category'])) {
+            $where .= " AND t.category = %s";
+            $params[] = sanitize_text_field($args['category']);
+        }
+
+        if (!empty($args['search'])) {
+            $s = '%' . $wpdb->esc_like($args['search']) . '%';
+            $where .= " AND (t.subject LIKE %s OR m.name LIKE %s)";
+            $params[] = $s;
+            $params[] = $s;
+        }
+
+        $query = "SELECT t.*, m.name as member_name, m.photo_url as member_photo
+                  FROM {$wpdb->prefix}sm_tickets t
+                  JOIN {$wpdb->prefix}sm_members m ON t.member_id = m.id
+                  WHERE $where
+                  ORDER BY t.updated_at DESC";
+
+        if (!empty($params)) {
+            return $wpdb->get_results($wpdb->prepare($query, $params));
+        }
+        return $wpdb->get_results($query);
+    }
+
+    public static function get_ticket($id) {
+        global $wpdb;
+        return $wpdb->get_row($wpdb->prepare(
+            "SELECT t.*, m.name as member_name, m.province as member_province, m.phone as member_phone
+             FROM {$wpdb->prefix}sm_tickets t
+             JOIN {$wpdb->prefix}sm_members m ON t.member_id = m.id
+             WHERE t.id = %d",
+            $id
+        ));
+    }
+
+    public static function get_ticket_thread($ticket_id) {
+        global $wpdb;
+        return $wpdb->get_results($wpdb->prepare(
+            "SELECT tr.*, u.display_name as sender_name
+             FROM {$wpdb->prefix}sm_ticket_thread tr
+             LEFT JOIN {$wpdb->base_prefix}users u ON tr.sender_id = u.ID
+             WHERE tr.ticket_id = %d
+             ORDER BY tr.created_at ASC",
+            $ticket_id
+        ));
+    }
+
+    public static function update_ticket_status($id, $status) {
+        global $wpdb;
+        return $wpdb->update("{$wpdb->prefix}sm_tickets", array('status' => $status), array('id' => $id));
+    }
 }
