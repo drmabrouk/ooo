@@ -94,6 +94,7 @@ class SM_Public {
     public function enqueue_styles() {
         wp_enqueue_media();
         wp_enqueue_script('jquery');
+        wp_add_inline_script('jquery', 'var ajaxurl = "' . admin_url('admin-ajax.php') . '";', 'before');
         wp_enqueue_style('dashicons');
         wp_enqueue_style('google-font-rubik', 'https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;700;800;900&display=swap', array(), null);
         wp_enqueue_script('chart-js', 'https://cdn.jsdelivr.net/npm/chart.js', array(), '4.4.1', true);
@@ -901,6 +902,15 @@ class SM_Public {
             } else {
                 wp_send_json_error('فشل في إدراج البيانات في قاعدة البيانات: ' . $wpdb->last_error);
             }
+        } elseif ($table === 'services') {
+            unset($data['id']);
+            $res = $wpdb->insert("{$wpdb->prefix}sm_services", $data);
+            if ($res) {
+                SM_Logger::log('استعادة بيانات', "تم استعادة الخدمة: " . $data['name']);
+                wp_send_json_success();
+            } else {
+                wp_send_json_error('فشل في إدراج البيانات في قاعدة البيانات: ' . $wpdb->last_error);
+            }
         }
 
         wp_send_json_error('نوع الاستعادة غير مدعوم حالياً');
@@ -1252,6 +1262,79 @@ class SM_Public {
             }
             SM_Settings::save_labels($labels);
             wp_redirect(add_query_arg('sm_tab', 'global-settings', wp_get_referer()));
+            exit;
+        }
+
+        if (isset($_POST['sm_save_settings_unified'])) {
+            check_admin_referer('sm_admin_action', 'sm_admin_nonce');
+
+            // 1. Save Syndicate Info
+            $info = SM_Settings::get_syndicate_info();
+            $info['syndicate_name'] = sanitize_text_field($_POST['syndicate_name']);
+            $info['syndicate_officer_name'] = sanitize_text_field($_POST['syndicate_officer_name']);
+            $info['phone'] = sanitize_text_field($_POST['syndicate_phone']);
+            $info['email'] = sanitize_email($_POST['syndicate_email']);
+            $info['syndicate_logo'] = esc_url_raw($_POST['syndicate_logo']);
+            $info['address'] = sanitize_text_field($_POST['syndicate_address']);
+            $info['map_link'] = esc_url_raw($_POST['syndicate_map_link'] ?? '');
+            $info['extra_details'] = sanitize_textarea_field($_POST['syndicate_extra_details'] ?? '');
+            $info['authority_name'] = sanitize_text_field($_POST['authority_name'] ?? '');
+            $info['authority_logo'] = esc_url_raw($_POST['authority_logo'] ?? '');
+
+            SM_Settings::save_syndicate_info($info);
+
+            // 2. Save Section Labels
+            $labels = SM_Settings::get_labels();
+            foreach($labels as $key => $val) {
+                if (isset($_POST[$key])) {
+                    $labels[$key] = sanitize_text_field($_POST[$key]);
+                }
+            }
+            SM_Settings::save_labels($labels);
+
+            wp_redirect(add_query_arg(['sm_tab' => 'global-settings', 'sub' => 'init', 'settings_saved' => 1], wp_get_referer()));
+            exit;
+        }
+
+        if (isset($_POST['sm_save_professional_options'])) {
+            check_admin_referer('sm_admin_action', 'sm_admin_nonce');
+            $grades_raw = explode("\n", str_replace("\r", "", $_POST['professional_grades']));
+            $grades = array();
+            foreach ($grades_raw as $line) {
+                $parts = explode("|", $line);
+                if (count($parts) == 2) {
+                    $grades[trim($parts[0])] = trim($parts[1]);
+                }
+            }
+            if (!empty($grades)) SM_Settings::save_professional_grades($grades);
+
+            $specs_raw = explode("\n", str_replace("\r", "", $_POST['specializations']));
+            $specs = array();
+            foreach ($specs_raw as $line) {
+                $parts = explode("|", $line);
+                if (count($parts) == 2) {
+                    $specs[trim($parts[0])] = trim($parts[1]);
+                }
+            }
+            if (!empty($specs)) SM_Settings::save_specializations($specs);
+            wp_redirect(add_query_arg(['sm_tab' => 'global-settings', 'sub' => 'professional', 'settings_saved' => 1], wp_get_referer()));
+            exit;
+        }
+
+        if (isset($_POST['sm_save_finance_settings'])) {
+            check_admin_referer('sm_admin_action', 'sm_admin_nonce');
+            SM_Settings::save_finance_settings(array(
+                'membership_new' => floatval($_POST['membership_new']),
+                'membership_renewal' => floatval($_POST['membership_renewal']),
+                'membership_penalty' => floatval($_POST['membership_penalty']),
+                'license_new' => floatval($_POST['license_new']),
+                'license_renewal' => floatval($_POST['license_renewal']),
+                'license_penalty' => floatval($_POST['license_penalty']),
+                'facility_a' => floatval($_POST['facility_a']),
+                'facility_b' => floatval($_POST['facility_b']),
+                'facility_c' => floatval($_POST['facility_c'])
+            ));
+            wp_redirect(add_query_arg(['sm_tab' => 'global-settings', 'sub' => 'finance', 'settings_saved' => 1], wp_get_referer()));
             exit;
         }
     }

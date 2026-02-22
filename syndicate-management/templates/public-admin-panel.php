@@ -282,6 +282,13 @@
         }
     });
 
+    window.addEventListener('load', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('settings_saved')) {
+            smShowNotification('تم حفظ الإعدادات بنجاح');
+        }
+    });
+
 })(window);
 </script>
 
@@ -859,7 +866,9 @@ $greeting = ($hour >= 5 && $hour < 12) ? 'صباح الخير' : 'مساء ال�
                                         <div class="sm-form-group"><label class="sm-label">اسم رئيس النقابة / المسؤول:</label><input type="text" name="syndicate_officer_name" value="<?php echo esc_attr($syndicate['syndicate_officer_name'] ?? ''); ?>" class="sm-input"></div>
                                         <div class="sm-form-group"><label class="sm-label">رقم التواصل الموحد:</label><input type="text" name="syndicate_phone" value="<?php echo esc_attr($syndicate['phone']); ?>" class="sm-input"></div>
                                         <div class="sm-form-group"><label class="sm-label">البريد الإلكتروني الرسمي:</label><input type="email" name="syndicate_email" value="<?php echo esc_attr($syndicate['email']); ?>" class="sm-input"></div>
-                                        <div class="sm-form-group" style="grid-column: span 2;"><label class="sm-label">العنوان الجغرافي للمقر الرئيسي:</label><input type="text" name="syndicate_address" value="<?php echo esc_attr($syndicate['address']); ?>" class="sm-input"></div>
+                                        <div class="sm-form-group"><label class="sm-label">العنوان الجغرافي للمقر الرئيسي:</label><input type="text" name="syndicate_address" value="<?php echo esc_attr($syndicate['address']); ?>" class="sm-input"></div>
+                                        <div class="sm-form-group"><label class="sm-label">رابط خرائط جوجل (Map Link):</label><input type="url" name="syndicate_map_link" value="<?php echo esc_attr($syndicate['map_link'] ?? ''); ?>" class="sm-input" placeholder="https://goo.gl/maps/..."></div>
+                                        <div class="sm-form-group" style="grid-column: span 2;"><label class="sm-label">تفاصيل إضافية / نبذة عن النقابة:</label><textarea name="syndicate_extra_details" class="sm-textarea" rows="3"><?php echo esc_textarea($syndicate['extra_details'] ?? ''); ?></textarea></div>
                                         <div class="sm-form-group" style="grid-column: span 2;">
                                             <label class="sm-label">شعار النقابة الرسمي (Official Logo):</label>
                                             <div style="display:flex; gap:10px;">
