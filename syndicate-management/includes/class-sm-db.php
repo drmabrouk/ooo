@@ -639,6 +639,9 @@ class SM_DB {
     public static function get_services($args = array()) {
         global $wpdb;
         $status = $args['status'] ?? 'active';
+        if ($status === 'any' || $status === 'all') {
+            return $wpdb->get_results("SELECT * FROM {$wpdb->prefix}sm_services ORDER BY created_at DESC");
+        }
         return $wpdb->get_results($wpdb->prepare("SELECT * FROM {$wpdb->prefix}sm_services WHERE status = %s ORDER BY created_at DESC", $status));
     }
 
@@ -649,15 +652,23 @@ class SM_DB {
             'description' => sanitize_textarea_field($data['description']),
             'fees' => floatval($data['fees']),
             'required_fields' => $data['required_fields'] ?? '[]',
-            'selected_profile_fields' => $data['selected_profile_fields'] ?? '',
-            'status' => 'active',
+            'selected_profile_fields' => $data['selected_profile_fields'] ?? '[]',
+            'status' => $data['status'] ?? 'active',
             'created_at' => current_time('mysql')
         ));
     }
 
     public static function update_service($id, $data) {
         global $wpdb;
-        return $wpdb->update("{$wpdb->prefix}sm_services", $data, array('id' => $id));
+        $update_data = [];
+        if (isset($data['name'])) $update_data['name'] = sanitize_text_field($data['name']);
+        if (isset($data['description'])) $update_data['description'] = sanitize_textarea_field($data['description']);
+        if (isset($data['fees'])) $update_data['fees'] = floatval($data['fees']);
+        if (isset($data['status'])) $update_data['status'] = sanitize_text_field($data['status']);
+        if (isset($data['required_fields'])) $update_data['required_fields'] = $data['required_fields'];
+        if (isset($data['selected_profile_fields'])) $update_data['selected_profile_fields'] = $data['selected_profile_fields'];
+
+        return $wpdb->update("{$wpdb->prefix}sm_services", $update_data, array('id' => intval($id)));
     }
 
     public static function delete_service($id) {

@@ -991,7 +991,21 @@ class SM_Public {
     public function ajax_add_service() {
         if (!current_user_can('sm_manage_system')) wp_send_json_error('Unauthorized');
         check_ajax_referer('sm_admin_action', 'nonce');
-        $res = SM_DB::add_service($_POST);
+
+        // Validation
+        if (empty($_POST['name'])) wp_send_json_error('اسم الخدمة مطلوب');
+        if (isset($_POST['fees']) && !is_numeric($_POST['fees'])) wp_send_json_error('الرسوم يجب أن تكون رقماً');
+
+        $data = [
+            'name' => sanitize_text_field($_POST['name']),
+            'description' => sanitize_textarea_field($_POST['description']),
+            'fees' => floatval($_POST['fees'] ?? 0),
+            'status' => in_array($_POST['status'], ['active', 'suspended']) ? $_POST['status'] : 'active',
+            'required_fields' => stripslashes($_POST['required_fields'] ?? '[]'),
+            'selected_profile_fields' => stripslashes($_POST['selected_profile_fields'] ?? '[]')
+        ];
+
+        $res = SM_DB::add_service($data);
         if ($res) wp_send_json_success();
         else wp_send_json_error('Failed to add service');
     }
@@ -1000,15 +1014,36 @@ class SM_Public {
         if (!current_user_can('sm_manage_system')) wp_send_json_error('Unauthorized');
         check_ajax_referer('sm_admin_action', 'nonce');
         $id = intval($_POST['id']);
-        $data = [
-            'name' => sanitize_text_field($_POST['name']),
-            'description' => sanitize_textarea_field($_POST['description']),
-            'fees' => floatval($_POST['fees']),
-            'status' => sanitize_text_field($_POST['status']),
-            'selected_profile_fields' => $_POST['selected_profile_fields'] ?? ''
-        ];
+
+        $data = [];
+        if (isset($_POST['name'])) {
+            if (empty($_POST['name'])) wp_send_json_error('اسم الخدمة مطلوب');
+            $data['name'] = sanitize_text_field($_POST['name']);
+        }
+        if (isset($_POST['description'])) $data['description'] = sanitize_textarea_field($_POST['description']);
+        if (isset($_POST['fees'])) {
+            if (!is_numeric($_POST['fees'])) wp_send_json_error('الرسوم يجب أن تكون رقماً');
+            $data['fees'] = floatval($_POST['fees']);
+        }
+        if (isset($_POST['status'])) {
+            $data['status'] = in_array($_POST['status'], ['active', 'suspended']) ? $_POST['status'] : 'active';
+        }
+        if (isset($_POST['required_fields'])) $data['required_fields'] = stripslashes($_POST['required_fields']);
+        if (isset($_POST['selected_profile_fields'])) $data['selected_profile_fields'] = stripslashes($_POST['selected_profile_fields']);
+
         if (SM_DB::update_service($id, $data)) wp_send_json_success();
         else wp_send_json_error('Failed to update service');
+    }
+
+    public function ajax_get_services_html() {
+        if (!current_user_can('sm_manage_system')) wp_send_json_error('Unauthorized');
+        check_ajax_referer('sm_admin_action', 'nonce');
+
+        ob_start();
+        include SM_PLUGIN_DIR . 'templates/admin-services.php';
+        $html = ob_get_clean();
+
+        wp_send_json_success(['html' => $html]);
     }
 
     public function ajax_delete_service() {
