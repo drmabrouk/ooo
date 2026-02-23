@@ -2356,6 +2356,37 @@ class SM_Public {
         else wp_send_json_error('Failed to delete article');
     }
 
+    public function ajax_save_alert() {
+        if (!current_user_can('sm_manage_system')) wp_send_json_error('Unauthorized');
+        check_ajax_referer('sm_admin_action', 'nonce');
+
+        $data = [
+            'id' => !empty($_POST['id']) ? intval($_POST['id']) : null,
+            'title' => sanitize_text_field($_POST['title']),
+            'message' => wp_kses_post($_POST['message']),
+            'severity' => sanitize_text_field($_POST['severity']),
+            'must_acknowledge' => !empty($_POST['must_acknowledge']) ? 1 : 0,
+            'status' => sanitize_text_field($_POST['status'] ?? 'active')
+        ];
+
+        if (SM_DB::save_alert($data)) wp_send_json_success();
+        else wp_send_json_error('Failed to save alert');
+    }
+
+    public function ajax_delete_alert() {
+        if (!current_user_can('sm_manage_system')) wp_send_json_error('Unauthorized');
+        check_ajax_referer('sm_admin_action', 'nonce');
+        if (SM_DB::delete_alert(intval($_POST['id']))) wp_send_json_success();
+        else wp_send_json_error('Failed to delete alert');
+    }
+
+    public function ajax_acknowledge_alert() {
+        if (!is_user_logged_in()) wp_send_json_error('Unauthorized');
+        $alert_id = intval($_POST['alert_id']);
+        if (SM_DB::acknowledge_alert($alert_id, get_current_user_id())) wp_send_json_success();
+        else wp_send_json_error('Failed to acknowledge alert');
+    }
+
     public function ajax_generate_pub_doc() {
         if (!current_user_can('sm_manage_system')) wp_send_json_error('Unauthorized');
         check_ajax_referer('sm_pub_action', 'nonce');
@@ -2570,6 +2601,70 @@ class SM_Public {
             'current_stage' => $req->current_stage,
             'rejection_reason' => $req->notes ?? ''
         ]);
+    }
+
+    public function inject_global_alerts() {
+        if (!is_user_logged_in()) return;
+
+        $user_id = get_current_user_id();
+        $alerts = SM_DB::get_active_alerts_for_user($user_id);
+
+        if (empty($alerts)) return;
+
+        foreach ($alerts as $alert) {
+            $severity_class = 'sm-alert-' . $alert->severity;
+            $bg_color = '#fff';
+            $border_color = '#e2e8f0';
+            $text_color = '#1a202c';
+
+            if ($alert->severity === 'warning') {
+                $bg_color = '#fffaf0';
+                $border_color = '#f6ad55';
+            } elseif ($alert->severity === 'critical') {
+                $bg_color = '#fff5f5';
+                $border_color = '#feb2b2';
+            }
+
+            ?>
+            <div id="sm-global-alert-<?php echo $alert->id; ?>" class="sm-alert-overlay" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); backdrop-filter:blur(3px); z-index:99999; display:flex; align-items:center; justify-content:center; animation: smFadeIn 0.3s ease-out;">
+                <div class="sm-alert-modal" style="background:<?php echo $bg_color; ?>; border:2px solid <?php echo $border_color; ?>; border-radius:15px; width:90%; max-width:500px; padding:30px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04); position:relative; text-align:center; direction:rtl; font-family:'Rubik', sans-serif;">
+                    <div style="font-size:40px; margin-bottom:15px;">
+                        <?php
+                        if ($alert->severity === 'info') echo 'ℹ️';
+                        elseif ($alert->severity === 'warning') echo '⚠️';
+                        elseif ($alert->severity === 'critical') echo '🚨';
+                        ?>
+                    </div>
+                    <h2 style="margin:0 0 15px 0; color:#2d3748; font-weight:800; font-size:1.5em;"><?php echo esc_html($alert->title); ?></h2>
+                    <div style="color:#4a5568; line-height:1.6; margin-bottom:25px; font-size:1.1em;"><?php echo wp_kses_post($alert->message); ?></div>
+                    <div style="font-size:11px; color:#a0aec0; margin-bottom:20px;"><?php echo date_i18n('j F Y, H:i', strtotime($alert->created_at)); ?></div>
+
+                    <button onclick="smAcknowledgeAlert(<?php echo $alert->id; ?>, <?php echo $alert->must_acknowledge ? 'true' : 'false'; ?>)" class="sm-btn" style="width:100%; height:45px; font-weight:800; background:<?php echo ($alert->severity === 'critical' ? '#e53e3e' : ($alert->severity === 'warning' ? '#dd6b20' : 'var(--sm-primary-color)')); ?>;">
+                        <?php echo $alert->must_acknowledge ? 'إقرار واستمرار' : 'إغلاق'; ?>
+                    </button>
+                </div>
+            </div>
+            <?php
+        }
+        ?>
+        <script>
+        function smAcknowledgeAlert(alertId, mustAck) {
+            const fd = new FormData();
+            fd.append('action', 'sm_acknowledge_alert');
+            fd.append('alert_id', alertId);
+
+            fetch('<?php echo admin_url('admin-ajax.php'); ?>', { method: 'POST', body: fd })
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    document.getElementById('sm-global-alert-' + alertId).remove();
+                } else if (!mustAck) {
+                    document.getElementById('sm-global-alert-' + alertId).remove();
+                }
+            });
+        }
+        </script>
+        <?php
     }
 
     public function ajax_submit_membership_request_stage3() {
