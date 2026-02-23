@@ -500,5 +500,22 @@ $all_requests = $is_official ? SM_DB::get_service_requests() : [];
         });
     };
 
+    window.smRollbackLog = function(logId) {
+        if (!confirm('هل أنت متأكد من استعادة هذه الخدمة؟')) return;
+        const fd = new FormData();
+        fd.append('action', 'sm_rollback_log_ajax');
+        fd.append('log_id', logId);
+        fd.append('nonce', '<?php echo wp_create_nonce("sm_admin_action"); ?>');
+        fetch(ajaxurl, {method: 'POST', body: fd}).then(r=>r.json()).then(res=>{
+            if (res.success) {
+                smShowNotification('تمت الاستعادة بنجاح');
+                smRefreshServicesList();
+                location.reload();
+            } else {
+                smShowNotification(res.data, true);
+            }
+        });
+    };
+
 })(jQuery);
 </script>
