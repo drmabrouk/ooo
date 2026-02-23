@@ -28,7 +28,7 @@ if ($doc_type === 'certificate') {
 <head>
     <meta charset="UTF-8">
     <title><?php echo esc_html($doc->title); ?></title>
-    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@400;700&family=Lateef&family=Aref+Ruqaa&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@400;700&family=Lateef&family=Aref+Ruqaa&family=Libre+Barcode+39&display=swap" rel="stylesheet">
     <style>
         @page {
             size: A4;
@@ -71,10 +71,11 @@ if ($doc_type === 'certificate') {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 20px 40px;
+            padding: 10px 40px;
             box-sizing: border-box;
             border-bottom: 2px solid <?php echo $primary_color; ?>;
             visibility: hidden; /* Hidden by default, shown in print */
+            z-index: 1000;
         }
 
         .page-footer {
@@ -92,14 +93,53 @@ if ($doc_type === 'certificate') {
             border-top: 1px solid #eee;
             visibility: hidden;
         }
+        .page-number::after { content: "صفحة " counter(page); }
 
-        /* Border frame */
-        <?php if (!empty($options['frame'])): ?>
+        /* Certificate specific styling */
+        <?php if ($doc_type === 'certificate'): ?>
+        .doc-title h1 { font-family: 'Amiri', serif; font-size: 55px; text-shadow: 2px 2px 4px rgba(0,0,0,0.1); margin-top: 20px; }
+        .main-content { font-family: 'Amiri', serif; font-size: 24px; text-align: center; line-height: 2.2; margin-top: 50px; }
+        .doc-container { background: #fffcf5; border: none; }
+        .page::before {
+            content: ''; position: absolute; top: 15mm; left: 15mm; right: 15mm; bottom: 15mm;
+            border: 2px solid #b45309; pointer-events: none;
+        }
+        .certificate-seal {
+            position: absolute; bottom: 100px; left: 100px; width: 120px; height: 120px;
+            background: rgba(180, 83, 9, 0.1); border: 4px double #b45309; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; transform: rotate(-15deg);
+            font-weight: bold; color: #b45309; font-size: 14px; text-align: center;
+        }
+        <?php endif; ?>
+
+        /* Statement specific styling */
+        <?php if ($doc_type === 'statement'): ?>
+        .doc-title { text-align: right; border-bottom: 2px solid <?php echo $primary_color; ?>; padding-bottom: 10px; }
+        .doc-title h1 { font-size: 24px; }
+        .main-content { margin-top: 30px; }
+        <?php endif; ?>
+
+        /* Border frame styling */
+        <?php
+        $frame_type = $options['frame_type'] ?? 'none';
+        if ($frame_type !== 'none'):
+            $f_border = '2px solid #ccc';
+            if ($frame_type === 'simple') $f_border = '2px solid ' . $primary_color;
+            if ($frame_type === 'double') $f_border = '6px double ' . $primary_color;
+            if ($frame_type === 'ornate') $f_border = '10px double ' . $primary_color;
+        ?>
         .doc-container::after {
-            content: ''; position: fixed; top: 10mm; left: 10mm; right: 10mm; bottom: 10mm;
-            border: <?php echo $border_style; ?>; pointer-events: none; z-index: 999;
+            content: ''; position: fixed; top: 8mm; left: 8mm; right: 8mm; bottom: 8mm;
+            border: <?php echo $f_border; ?>; pointer-events: none; z-index: 999;
             visibility: hidden;
         }
+        <?php if ($frame_type === 'ornate'): ?>
+        .doc-container::before {
+            content: ''; position: fixed; top: 12mm; left: 12mm; right: 12mm; bottom: 12mm;
+            border: 1px solid <?php echo $primary_color; ?>; pointer-events: none; z-index: 999;
+            visibility: hidden;
+        }
+        <?php endif; ?>
         <?php endif; ?>
 
         .content-body { padding: 20px 40px; }
@@ -114,8 +154,11 @@ if ($doc_type === 'certificate') {
             body { background: none; }
             .doc-container { margin: 0; width: 100%; box-shadow: none; }
             .page-header, .page-footer { visibility: visible; }
-            <?php if (!empty($options['frame'])): ?>
+            <?php if ($frame_type !== 'none'): ?>
             .doc-container::after { visibility: visible; }
+            <?php if ($frame_type === 'ornate'): ?>
+            .doc-container::before { visibility: visible; }
+            <?php endif; ?>
             <?php endif; ?>
             .no-print { display: none; }
 
@@ -146,11 +189,22 @@ if ($doc_type === 'certificate') {
 
 <!-- Header for Printing (repeated) -->
 <div class="page-header">
-    <div style="text-align: right;">
-        <h2 style="margin: 0; font-size: 18px; color: <?php echo $primary_color; ?>;"><?php echo esc_html($syndicate['syndicate_name']); ?></h2>
-        <p style="margin: 3px 0 0 0; font-size: 12px; font-weight: bold;"><?php echo esc_html($syndicate['authority_name']); ?></p>
+    <?php if (!empty($syndicate['authority_logo'])): ?>
+        <img src="<?php echo esc_url($syndicate['authority_logo']); ?>" style="height: 60px;" alt="Authority Logo">
+    <?php else: ?>
+        <div></div>
+    <?php endif; ?>
+
+    <div style="text-align: center; flex: 1;">
+        <h2 style="margin: 0; font-size: 18px; color: <?php echo $primary_color; ?>; font-weight: 900;"><?php echo esc_html($syndicate['syndicate_name']); ?></h2>
+        <p style="margin: 3px 0 0 0; font-size: 11px; font-weight: bold; color: #666;"><?php echo esc_html($syndicate['authority_name']); ?></p>
     </div>
-    <img src="<?php echo esc_url($syndicate['syndicate_logo']); ?>" style="height: 70px;" alt="Logo">
+
+    <?php if (!empty($syndicate['syndicate_logo'])): ?>
+        <img src="<?php echo esc_url($syndicate['syndicate_logo']); ?>" style="height: 70px;" alt="Syndicate Logo">
+    <?php else: ?>
+        <div></div>
+    <?php endif; ?>
 </div>
 
 <!-- Footer for Printing (repeated) -->
@@ -158,12 +212,16 @@ if ($doc_type === 'certificate') {
     <div style="font-size: 10px; color: #666;">
         <p style="margin: 0;"><?php echo esc_html($syndicate['address']); ?></p>
         <p style="margin: 0;">هاتف: <?php echo esc_html($syndicate['phone']); ?> | بريد: <?php echo esc_html($syndicate['email']); ?></p>
+        <?php if (!empty($syndicate['website_url'])): ?>
+            <p style="margin: 0;">الموقع الإلكتروني: <?php echo esc_url($syndicate['website_url']); ?></p>
+        <?php endif; ?>
+        <p class="page-number" style="margin-top: 5px; font-weight: bold;"></p>
     </div>
     <div class="codes-block">
         <?php if (!empty($options['barcode'])): ?>
             <div style="text-align: center;">
-                <div style="font-family: monospace; font-size: 9px;"><?php echo $doc->serial_number; ?></div>
-                <div style="height: 25px; width: 100px; background: #000; margin-top: 2px;"></div>
+                    <div style="font-family: 'Libre Barcode 39', cursive; font-size: 40px; line-height: 1;"><?php echo $doc->serial_number; ?></div>
+                    <div style="font-size: 8px; font-family: monospace;"><?php echo $doc->serial_number; ?></div>
             </div>
         <?php endif; ?>
         <?php if (!empty($options['qr'])): ?>
@@ -184,11 +242,16 @@ if ($doc_type === 'certificate') {
                     <div class="content-body">
                         <!-- Preview Header (Only visible on screen) -->
                         <div class="preview-header no-print">
-                            <div style="text-align: right;">
-                                <h2 style="margin: 0; font-size: 18px; color: <?php echo $primary_color; ?>;"><?php echo esc_html($syndicate['syndicate_name']); ?></h2>
-                                <p style="margin: 3px 0 0 0; font-size: 12px;"><?php echo esc_html($syndicate['authority_name']); ?></p>
+                            <?php if (!empty($syndicate['authority_logo'])): ?>
+                                <img src="<?php echo esc_url($syndicate['authority_logo']); ?>" style="height: 60px;" alt="Authority Logo">
+                            <?php endif; ?>
+                            <div style="text-align: center; flex: 1;">
+                                <h2 style="margin: 0; font-size: 18px; color: <?php echo $primary_color; ?>; font-weight: 900;"><?php echo esc_html($syndicate['syndicate_name']); ?></h2>
+                                <p style="margin: 3px 0 0 0; font-size: 11px; color: #666;"><?php echo esc_html($syndicate['authority_name']); ?></p>
                             </div>
-                            <img src="<?php echo esc_url($syndicate['syndicate_logo']); ?>" style="height: 70px;" alt="Logo">
+                            <?php if (!empty($syndicate['syndicate_logo'])): ?>
+                                <img src="<?php echo esc_url($syndicate['syndicate_logo']); ?>" style="height: 70px;" alt="Syndicate Logo">
+                            <?php endif; ?>
                         </div>
 
                         <div class="doc-title">
@@ -200,11 +263,24 @@ if ($doc_type === 'certificate') {
                             <?php echo $doc->content; ?>
                         </div>
 
+                        <?php if (!empty($options['fees']) && floatval($options['fees']) > 0): ?>
+                            <div style="margin-top: 30px; padding: 15px; border: 1px dashed #ccc; border-radius: 8px; width: fit-content;">
+                                <strong>الرسوم المسددة: </strong> <?php echo number_format($options['fees'], 2); ?> ج.م
+                            </div>
+                        <?php endif; ?>
+
+                        <?php if ($doc_type === 'certificate'): ?>
+                            <div class="certificate-seal">ختم النقابة<br>المعتمد</div>
+                        <?php endif; ?>
+
                         <!-- Preview Footer -->
                         <div class="preview-footer no-print">
                             <div style="font-size: 10px; color: #666;">
                                 <p style="margin: 0;"><?php echo esc_html($syndicate['address']); ?></p>
                                 <p style="margin: 0;">هاتف: <?php echo esc_html($syndicate['phone']); ?></p>
+                                <?php if (!empty($syndicate['website_url'])): ?>
+                                    <p style="margin: 0;">الموقع: <?php echo esc_url($syndicate['website_url']); ?></p>
+                                <?php endif; ?>
                             </div>
                             <div class="codes-block">
                                 <?php if (!empty($options['qr'])): ?>

@@ -303,12 +303,13 @@ class SM_Public {
             exit;
         }
         $syndicate = SM_Settings::get_syndicate_info();
-        $output = '<div class="sm-login-container" style="display: flex; justify-content: center; align-items: center; min-height: 80vh; padding: 20px; background: #fff;">';
-        $output .= '<div class="sm-login-box" style="width: 100%; max-width: 400px; background: #ffffff; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid #f1f5f9;" dir="rtl">';
+        $output = '<div class="sm-login-container" style="display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; background: #f8fafc;">';
+        $output .= '<div class="sm-login-box" style="width: 100%; max-width: 420px; background: #ffffff; border-radius: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.08); overflow: hidden; border: 1px solid #f1f5f9;" dir="rtl">';
 
-        $output .= '<div style="background: #ffffff; padding: 30px 20px; text-align: center; border-bottom: 1px solid #f1f5f9;">';
-        $output .= '<h2 style="margin: 0; font-weight: 800; color: #111F35; font-size: 1.4em; letter-spacing: -0.5px;">'.esc_html($syndicate['syndicate_name']).'</h2>';
-        $output .= '<p style="margin: 5px 0 0 0; color: #64748b; font-size: 0.85em;">بوابة تسجيل الدخول الذكية</p>';
+        $output .= '<div style="background: var(--sm-dark-color); padding: 35px 25px; text-align: center; color: #fff;">';
+        $output .= '<h3 style="margin: 0 0 10px 0; font-size: 0.9em; opacity: 0.8; font-weight: 400;">أهلاً بك مجدداً</h3>';
+        $output .= '<h2 style="margin: 0; font-weight: 900; color: #fff; font-size: 1.6em; letter-spacing: -0.5px;">'.esc_html($syndicate['syndicate_name']).'</h2>';
+        $output .= '<p style="margin: 8px 0 0 0; color: #e2e8f0; font-size: 0.85em;">المنصة الرقمية للخدمات النقابية الموحدة</p>';
         $output .= '</div>';
 
         $output .= '<div style="padding: 30px 30px;">';
@@ -326,15 +327,15 @@ class SM_Public {
             #sm_login_form input:focus { border-color: var(--sm-primary-color); outline: none; background: #fff; }
             #sm_login_form .login-remember { display: flex; align-items: center; gap: 8px; font-size: 0.8em; color: #64748b; margin-top: -5px; }
             #sm_login_form input[type="submit"] {
-                width: 100%; padding: 14px; background: #111F35; color: #fff; border: none;
+                width: 100%; padding: 14px; background: var(--sm-primary-color); color: #fff; border: none;
                 border-radius: 10px; font-weight: 700; font-size: 15px; cursor: pointer; transition: 0.3s;
             }
-            #sm_login_form input[type="submit"]:hover { background: var(--sm-primary-color); }
-            .sm-login-footer-links { margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-            .sm-footer-btn { text-decoration: none; padding: 10px; border-radius: 8px; font-size: 12px; font-weight: 600; text-align: center; transition: 0.2s; border: 1px solid #e2e8f0; color: #4a5568; }
-            .sm-footer-btn:hover { background: #f8fafc; }
-            .sm-footer-btn-primary { background: #111F35; color: white !important; border: none; }
-            .sm-footer-btn-primary:hover { background: var(--sm-primary-color); }
+            #sm_login_form input[type="submit"]:hover { opacity: 0.9; transform: translateY(-1px); }
+            .sm-login-footer-links { margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+            .sm-footer-btn { text-decoration: none !important; padding: 12px; border-radius: 10px; font-size: 13px; font-weight: 700; text-align: center; transition: 0.2s; border: 1px solid #e2e8f0; color: #4a5568; box-shadow: none !important; }
+            .sm-footer-btn:hover { background: #f8fafc; border-color: #cbd5e0; }
+            .sm-footer-btn-primary { background: #f1f5f9; color: var(--sm-dark-color) !important; border: 1px solid #e2e8f0; }
+            .sm-footer-btn-primary:hover { background: #e2e8f0; }
         </style>';
 
         $args = array(
@@ -377,29 +378,59 @@ class SM_Public {
         $output .= '</div>';
         $output .= '</div></div>';
 
-        // Registration Modal (Membership Request)
-        $output .= '<div id="sm-registration-modal" class="sm-modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:10000; justify-content:center; align-items:center; padding:20px;">';
-        $output .= '<div class="sm-modal-content" style="background:white; width:100%; max-width:600px; max-height: 90vh; overflow-y: auto; padding:40px; border-radius:24px; position:relative;">';
-        $output .= '<button onclick="smToggleRegistration()" style="position:absolute; top:20px; left:20px; border:none; background:none; font-size:24px; cursor:pointer; color:#94a3b8;">&times;</button>';
-        $output .= '<div style="text-align:center; margin-bottom:30px;"><h3 style="margin:0; font-weight:900; font-size:1.5em; color:var(--sm-dark-color);">طلب عضوية جديدة</h3><p style="color:#64748b; font-size:13px; margin-top:5px;">يرجى ملء كافة البيانات بدقة للمراجعة</p></div>';
+        // Registration Modal (Membership Request) - Sequential 3-Step Form
+        $output .= '<div id="sm-registration-modal" class="sm-modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(17,31,53,0.85); z-index:10000; justify-content:center; align-items:center; padding:20px; backdrop-filter: blur(4px);">';
+        $output .= '<div class="sm-modal-content" style="background:white; width:100%; max-width:450px; padding:40px; border-radius:24px; position:relative; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);">';
+        $output .= '<button onclick="smToggleRegistration()" style="position:absolute; top:20px; left:20px; border:none; background:none; font-size:24px; cursor:pointer; color:#94a3b8; transition: 0.2s;">&times;</button>';
+        $output .= '<div style="text-align:center; margin-bottom:30px;"><h3 style="margin:0; font-weight:900; font-size:1.5em; color:var(--sm-dark-color);">طلب عضوية جديدة</h3><p style="color:#64748b; font-size:13px; margin-top:5px;">بوابة الانضمام الرقمية الموحدة</p></div>';
+
         $output .= '<form id="sm-membership-request-form">';
-        $output .= '<div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">';
-        $output .= '<div class="sm-form-group" style="grid-column: span 2;"><label class="sm-label">الاسم الرباعي الكامل:</label><input name="name" type="text" class="sm-input" required placeholder="أدخل اسمك كما هو في البطاقة"></div>';
-        $output .= '<div class="sm-form-group"><label class="sm-label">الرقم القومي (14 رقم):</label><input name="national_id" type="text" class="sm-input" required maxlength="14" placeholder="299..."></div>';
-        $output .= '<div class="sm-form-group"><label class="sm-label">المحافظة:</label><select name="governorate" class="sm-select" required><option value="">-- اختر --</option>';
+
+        // Step Indicators
+        $output .= '<div class="sm-steps-indicator" style="display:flex; justify-content:center; gap:12px; margin-bottom:30px;">';
+        $output .= '<span id="reg-dot-1" style="width:32px; height:32px; background:var(--sm-primary-color); color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:14px; transition:0.3s;">1</span>';
+        $output .= '<span id="reg-dot-2" style="width:32px; height:32px; background:#edf2f7; color:#718096; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:14px; transition:0.3s;">2</span>';
+        $output .= '<span id="reg-dot-3" style="width:32px; height:32px; background:#edf2f7; color:#718096; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:14px; transition:0.3s;">3</span>';
+        $output .= '</div>';
+
+        // Step 1: Identity
+        $output .= '<div id="reg-step-1" class="reg-step">';
+        $output .= '<p style="font-size:14px; color:#4a5568; margin-bottom:20px; text-align:center; font-weight:600;">المرحلة الأولى: البيانات التعريفية</p>';
+        $output .= '<div class="sm-form-group"><label class="sm-label">الاسم الرباعي الكامل:</label><input name="name" type="text" class="sm-input" required placeholder="الاسم كما في بطاقة الرقم القومي"></div>';
+        $output .= '<div class="sm-form-group"><label class="sm-label">الرقم القومي (14 رقم):</label><input name="national_id" type="text" class="sm-input" required maxlength="14" placeholder="2xxxxxxxxxxxxx"></div>';
+        $output .= '<div class="sm-form-group"><label class="sm-label">المحافظة:</label><select name="governorate" class="sm-select" required><option value="">-- اختر المحافظة --</option>';
         foreach(SM_Settings::get_governorates() as $k=>$v) $output .= "<option value='$k'>$v</option>";
         $output .= '</select></div>';
+        $output .= '<button type="button" onclick="smRegNext(2)" class="sm-btn" style="width:100%; margin-top:10px;">التالي: البيانات المهنية</button>';
+        $output .= '</div>';
+
+        // Step 2: Professional
+        $output .= '<div id="reg-step-2" class="reg-step" style="display:none;">';
+        $output .= '<p style="font-size:14px; color:#4a5568; margin-bottom:20px; text-align:center; font-weight:600;">المرحلة الثانية: التخصص والدرجة</p>';
         $output .= '<div class="sm-form-group"><label class="sm-label">الدرجة الوظيفية:</label><select name="professional_grade" class="sm-select">';
         foreach(SM_Settings::get_professional_grades() as $k=>$v) $output .= "<option value='$k'>$v</option>";
         $output .= '</select></div>';
         $output .= '<div class="sm-form-group"><label class="sm-label">التخصص:</label><select name="specialization" class="sm-select">';
         foreach(SM_Settings::get_specializations() as $k=>$v) $output .= "<option value='$k'>$v</option>";
         $output .= '</select></div>';
-        $output .= '<div class="sm-form-group"><label class="sm-label">رقم الهاتف:</label><input name="phone" type="text" class="sm-input" required placeholder="01..."></div>';
-        $output .= '<div class="sm-form-group"><label class="sm-label">البريد الإلكتروني:</label><input name="email" type="email" class="sm-input" required placeholder="example@mail.com"></div>';
-        $output .= '<div class="sm-form-group" style="grid-column: span 2;"><label class="sm-label">ملاحظات إضافية:</label><textarea name="notes" class="sm-textarea" rows="2"></textarea></div>';
+        $output .= '<div class="sm-form-group"><label class="sm-label">رقم الهاتف الجوال:</label><input name="phone" type="text" class="sm-input" required placeholder="01xxxxxxxxx"></div>';
+        $output .= '<div style="display:grid; grid-template-columns: 1fr 2fr; gap:10px;">';
+        $output .= '<button type="button" onclick="smRegNext(1)" class="sm-btn sm-btn-outline" style="width:100%;">السابق</button>';
+        $output .= '<button type="button" onclick="smRegNext(3)" class="sm-btn" style="width:100%;">التالي: تأكيد الطلب</button>';
         $output .= '</div>';
-        $output .= '<button type="submit" class="sm-btn" style="width:100%; margin-top:25px; padding:15px;">إرسال طلب العضوية</button>';
+        $output .= '</div>';
+
+        // Step 3: Account & Submission
+        $output .= '<div id="reg-step-3" class="reg-step" style="display:none;">';
+        $output .= '<p style="font-size:14px; color:#4a5568; margin-bottom:20px; text-align:center; font-weight:600;">المرحلة الثالثة: البريد الإلكتروني</p>';
+        $output .= '<div class="sm-form-group"><label class="sm-label">البريد الإلكتروني:</label><input name="email" type="email" class="sm-input" required placeholder="example@domain.com"></div>';
+        $output .= '<div class="sm-form-group"><label class="sm-label">ملاحظات إضافية (اختياري):</label><textarea name="notes" class="sm-textarea" rows="3" placeholder="أي معلومات إضافية تود إضافتها..."></textarea></div>';
+        $output .= '<div style="display:grid; grid-template-columns: 1fr 2fr; gap:10px;">';
+        $output .= '<button type="button" onclick="smRegNext(2)" class="sm-btn sm-btn-outline" style="width:100%;">السابق</button>';
+        $output .= '<button type="submit" class="sm-btn" style="width:100%;">إرسال طلب الانضمام</button>';
+        $output .= '</div>';
+        $output .= '</div>';
+
         $output .= '</form>';
         $output .= '</div></div>';
 
@@ -449,7 +480,46 @@ class SM_Public {
         }
         function smToggleRegistration() {
             const m = document.getElementById("sm-registration-modal");
-            m.style.display = m.style.display === "none" ? "flex" : "none";
+            const isClosing = m.style.display !== "none";
+            m.style.display = isClosing ? "none" : "flex";
+            if (!isClosing) {
+                smRegNext(1);
+                document.getElementById("sm-membership-request-form").reset();
+            }
+        }
+        function smRegNext(step) {
+            if (step === 2) {
+                const name = document.querySelector("#sm-membership-request-form input[name=\"name\"]").value;
+                const nid = document.querySelector("#sm-membership-request-form input[name=\"national_id\"]").value;
+                const gov = document.querySelector("#sm-membership-request-form select[name=\"governorate\"]").value;
+                if (!name || nid.length !== 14 || !gov) {
+                    return alert("يرجى التأكد من إدخال الاسم الرباعي والرقم القومي (14 رقم) واختيار المحافظة.");
+                }
+            }
+            if (step === 3) {
+                const phone = document.querySelector("#sm-membership-request-form input[name=\"phone\"]").value;
+                if (phone.length < 10) {
+                    return alert("يرجى إدخال رقم هاتف صحيح.");
+                }
+            }
+            document.querySelectorAll(".reg-step").forEach(s => s.style.display = "none");
+            document.getElementById("reg-step-" + step).style.display = "block";
+            for (let i = 1; i <= 3; i++) {
+                const dot = document.getElementById("reg-dot-" + i);
+                if (i < step) {
+                    dot.style.background = "#38a169";
+                    dot.style.color = "white";
+                    dot.innerText = "✓";
+                } else if (i === step) {
+                    dot.style.background = "var(--sm-primary-color)";
+                    dot.style.color = "white";
+                    dot.innerText = i;
+                } else {
+                    dot.style.background = "#edf2f7";
+                    dot.style.color = "#718096";
+                    dot.innerText = i;
+                }
+            }
         }
         function smRequestOTP() {
             const nid = document.getElementById("rec_national_id").value;
@@ -2130,11 +2200,12 @@ class SM_Public {
             'content' => wp_kses_post($_POST['content']),
             'options' => [
                 'doc_type' => sanitize_text_field($_POST['doc_type'] ?? 'report'),
+                'fees' => floatval($_POST['fees'] ?? 0),
                 'header' => !empty($_POST['header']),
                 'footer' => !empty($_POST['footer']),
                 'qr' => !empty($_POST['qr']),
                 'barcode' => !empty($_POST['barcode']),
-                'frame' => !empty($_POST['frame'])
+                'frame_type' => sanitize_text_field($_POST['frame_type'] ?? 'none')
             ]
         ];
 
@@ -2182,6 +2253,7 @@ class SM_Public {
         $syndicate['syndicate_officer_name'] = sanitize_text_field($_POST['syndicate_officer_name']);
         $syndicate['phone'] = sanitize_text_field($_POST['phone']);
         $syndicate['email'] = sanitize_email($_POST['email']);
+        $syndicate['website_url'] = esc_url_raw($_POST['website_url'] ?? '');
         $syndicate['address'] = sanitize_text_field($_POST['address']);
         $syndicate['syndicate_logo'] = esc_url_raw($_POST['syndicate_logo']);
         $syndicate['authority_logo'] = esc_url_raw($_POST['authority_logo']);
