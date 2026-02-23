@@ -433,11 +433,18 @@ class SM_Public {
         $output .= '</select></div>';
 
         $output .= '<div id="pay_instr_wallet" class="sm-info-box" style="margin-bottom: 20px; padding: 15px; background: #f8fafc; border-radius: 10px; font-size: 13px; line-height: 1.6;">';
-        $output .= '<strong>تعليمات الدفع:</strong> قم بتحويل مبلغ 480 ج.م إلى الرقم الآتي: <strong>01000000000</strong> ثم أدخل رقم العملية المرجعي وصورة التحويل أدناه.';
+        $output .= '<strong>تعليمات دفع المحفظة الإلكترونية:</strong><br>';
+        $output .= '1. قم بتحويل مبلغ <strong>480 ج.م</strong> إلى رقم المحفظة: <strong>01000000000</strong> (فودافون كاش).<br>';
+        $output .= '2. احتفظ بلقطة شاشة (Screenshot) لرسالة التأكيد أو إيصال التحويل.<br>';
+        $output .= '3. أدخل رقم العملية (المرجع) في الحقل أدناه وارفع الصورة.';
         $output .= '</div>';
 
         $output .= '<div id="pay_instr_bank" class="sm-info-box" style="display:none; margin-bottom: 20px; padding: 15px; background: #f8fafc; border-radius: 10px; font-size: 13px; line-height: 1.6;">';
-        $output .= '<strong>تعليمات الدفع:</strong> قم بالتحويل إلى الحساب البنكي رقم: <strong>EG0000000000000000000000</strong> باسم النقابة، ثم أرفق بيانات التحويل أدناه.';
+        $output .= '<strong>تعليمات التحويل البنكي:</strong><br>';
+        $output .= '1. قم بتحويل مبلغ <strong>480 ج.م</strong> إلى الحساب رقم: <strong>0000-000000-000</strong><br>';
+        $output .= '2. IBAN: <strong>EG000000000000000000000000000</strong><br>';
+        $output .= '3. بنك مصر - فرع القاهرة - باسم (النقابة العامة).<br>';
+        $output .= '4. ارفع صورة إيصال الإيداع أو التحويل البنكي أدناه.';
         $output .= '</div>';
 
         $output .= '<div class="sm-form-group"><label class="sm-label">رقم العملية المرجعي / التسلسلي:</label><input name="payment_reference" type="text" class="sm-input" required></div>';
@@ -1928,8 +1935,15 @@ class SM_Public {
         $data = array(
             'name' => sanitize_text_field($_POST['name']),
             'national_id' => sanitize_text_field($_POST['national_id']),
-            'professional_grade' => sanitize_text_field($_POST['professional_grade']),
+            'university' => sanitize_text_field($_POST['university']),
+            'faculty' => sanitize_text_field($_POST['faculty']),
+            'department' => sanitize_text_field($_POST['department']),
+            'graduation_date' => sanitize_text_field($_POST['graduation_date']),
+            'academic_degree' => sanitize_text_field($_POST['academic_degree']),
             'specialization' => sanitize_text_field($_POST['specialization']),
+            'residence_governorate' => sanitize_text_field($_POST['residence_governorate']),
+            'residence_city' => sanitize_text_field($_POST['residence_city']),
+            'residence_street' => sanitize_textarea_field($_POST['residence_street']),
             'governorate' => sanitize_text_field($_POST['governorate']),
             'phone' => sanitize_text_field($_POST['phone']),
             'email' => sanitize_email($_POST['email']),
@@ -1989,7 +2003,7 @@ class SM_Public {
             'email' => sanitize_email($_POST['email']),
             'payment_method' => sanitize_text_field($_POST['payment_method']),
             'payment_reference' => sanitize_text_field($_POST['payment_reference']),
-            'status' => 'Pending Payment Verification',
+            'status' => 'Payment Under Review',
             'current_stage' => 2,
             'created_at' => current_time('mysql')
         ];
@@ -2022,6 +2036,12 @@ class SM_Public {
 
         if ($status === 'approved') {
             $member_data = (array)$req;
+
+            // Set Membership Validity
+            $member_data['membership_start_date'] = current_time('Y-m-d');
+            $member_data['membership_expiration_date'] = date('Y-12-31');
+            $member_data['membership_status'] = 'Active – New Member';
+
             // Clean up non-member fields
             $exclude = [
                 'id', 'status', 'processed_by', 'created_at', 'current_stage',
@@ -2033,6 +2053,31 @@ class SM_Public {
 
             $member_id = SM_DB::add_member($member_data);
             if (is_wp_error($member_id)) wp_send_json_error($member_id->get_error_message());
+
+            // Update photo url from request to member
+            if ($req->doc_photo_url) {
+                SM_DB::update_member_photo($member_id, $req->doc_photo_url);
+            }
+
+            // Move uploaded documents to Archive (Document Vault)
+            $docs_to_archive = [
+                'doc_qualification_url' => 'شهادة المؤهل الدراسي',
+                'doc_id_url' => 'بطاقة الرقم القومي',
+                'doc_military_url' => 'شهادة الخدمة العسكرية',
+                'doc_criminal_url' => 'صحيفة الحالة الجنائية',
+                'payment_screenshot_url' => 'إيصال سداد رسوم العضوية'
+            ];
+            foreach ($docs_to_archive as $field => $title) {
+                if ($req->$field) {
+                    SM_DB::add_document([
+                        'member_id' => $member_id,
+                        'category' => 'other',
+                        'title' => $title,
+                        'file_url' => $req->$field,
+                        'file_type' => 'application/pdf'
+                    ]);
+                }
+            }
 
             // Log to Finance
             SM_Finance::record_payment([
@@ -2543,7 +2588,7 @@ class SM_Public {
             ];
 
             $update_data = [
-                'status' => 'Pending Document Verification',
+                'status' => 'Awaiting Physical Documents',
                 'current_stage' => 3
             ];
 
