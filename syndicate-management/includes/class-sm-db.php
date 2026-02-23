@@ -176,6 +176,13 @@ class SM_DB {
             'professional_grade' => sanitize_text_field($data['professional_grade'] ?? ''),
             'specialization' => sanitize_text_field($data['specialization'] ?? ''),
             'academic_degree' => sanitize_text_field($data['academic_degree'] ?? ''),
+            'university' => sanitize_text_field($data['university'] ?? ''),
+            'faculty' => sanitize_text_field($data['faculty'] ?? ''),
+            'department' => sanitize_text_field($data['department'] ?? ''),
+            'graduation_date' => sanitize_text_field($data['graduation_date'] ?? null),
+            'residence_street' => sanitize_textarea_field($data['residence_street'] ?? ''),
+            'residence_city' => sanitize_text_field($data['residence_city'] ?? ''),
+            'residence_governorate' => sanitize_text_field($data['residence_governorate'] ?? ''),
             'governorate' => sanitize_text_field($data['governorate'] ?? ''),
             'membership_number' => sanitize_text_field($data['membership_number'] ?? ''),
             'membership_start_date' => sanitize_text_field($data['membership_start_date'] ?? null),
@@ -219,7 +226,9 @@ class SM_DB {
         $update_data = array();
         $fields = [
             'national_id', 'name', 'gender', 'professional_grade', 'specialization',
-            'academic_degree', 'governorate', 'membership_number', 'membership_start_date',
+            'academic_degree', 'university', 'faculty', 'department', 'graduation_date',
+            'residence_street', 'residence_city', 'residence_governorate',
+            'governorate', 'membership_number', 'membership_start_date',
             'membership_expiration_date', 'membership_status', 'license_number',
             'license_issue_date', 'license_expiration_date', 'facility_number',
             'facility_name', 'facility_license_issue_date', 'facility_license_expiration_date',
@@ -229,7 +238,7 @@ class SM_DB {
 
         foreach ($fields as $f) {
             if (isset($data[$f])) {
-                if (in_array($f, ['facility_address', 'notes'])) {
+                if (in_array($f, ['facility_address', 'notes', 'residence_street'])) {
                     $update_data[$f] = sanitize_textarea_field($data[$f]);
                 } elseif ($f === 'email') {
                     $update_data[$f] = sanitize_email($data[$f]);
@@ -875,6 +884,20 @@ class SM_DB {
         return $res ? $wpdb->insert_id : false;
     }
 
+    public static function add_pub_document($data) {
+        global $wpdb;
+        $res = $wpdb->insert("{$wpdb->prefix}sm_pub_documents", [
+            'template_id' => intval($data['template_id']),
+            'serial_number' => sanitize_text_field($data['serial_number']),
+            'title' => sanitize_text_field($data['title']),
+            'member_id' => intval($data['member_id'] ?? 0),
+            'content_data' => $data['content_data'],
+            'created_by' => get_current_user_id(),
+            'created_at' => current_time('mysql')
+        ]);
+        return $res ? $wpdb->insert_id : false;
+    }
+
     public static function get_pub_documents($args = []) {
         global $wpdb;
         $where = "1=1";
@@ -1077,5 +1100,82 @@ class SM_DB {
     public static function delete_article($id) {
         global $wpdb;
         return $wpdb->delete("{$wpdb->prefix}sm_articles", ['id' => intval($id)]);
+    }
+
+    // Membership Request Multi-Stage Methods
+    public static function add_membership_request($data) {
+        global $wpdb;
+        return $wpdb->insert("{$wpdb->prefix}sm_membership_requests", array(
+            'national_id' => sanitize_text_field($data['national_id']),
+            'name' => sanitize_text_field($data['name']),
+            'gender' => sanitize_text_field($data['gender'] ?? 'male'),
+            'professional_grade' => sanitize_text_field($data['professional_grade'] ?? ''),
+            'specialization' => sanitize_text_field($data['specialization'] ?? ''),
+            'academic_degree' => sanitize_text_field($data['academic_degree'] ?? ''),
+            'university' => sanitize_text_field($data['university'] ?? ''),
+            'faculty' => sanitize_text_field($data['faculty'] ?? ''),
+            'department' => sanitize_text_field($data['department'] ?? ''),
+            'graduation_date' => sanitize_text_field($data['graduation_date'] ?? null),
+            'residence_street' => sanitize_textarea_field($data['residence_street'] ?? ''),
+            'residence_city' => sanitize_text_field($data['residence_city'] ?? ''),
+            'residence_governorate' => sanitize_text_field($data['residence_governorate'] ?? ''),
+            'governorate' => sanitize_text_field($data['governorate'] ?? ''),
+            'phone' => sanitize_text_field($data['phone'] ?? ''),
+            'email' => sanitize_email($data['email'] ?? ''),
+            'notes' => sanitize_textarea_field($data['notes'] ?? ''),
+            'current_stage' => 1,
+            'status' => 'Pending Payment',
+            'created_at' => current_time('mysql')
+        ));
+    }
+
+    public static function update_membership_request($id, $data) {
+        global $wpdb;
+        $update_data = array();
+        $fields = [
+            'name', 'gender', 'professional_grade', 'specialization', 'academic_degree',
+            'university', 'faculty', 'department', 'graduation_date',
+            'residence_street', 'residence_city', 'residence_governorate', 'governorate',
+            'phone', 'email', 'notes', 'payment_method', 'payment_reference', 'payment_screenshot_url',
+            'doc_qualification_url', 'doc_id_url', 'doc_military_url', 'doc_criminal_url', 'doc_photo_url',
+            'current_stage', 'status', 'rejection_reason', 'processed_by'
+        ];
+
+        foreach ($fields as $f) {
+            if (isset($data[$f])) {
+                if (in_array($f, ['notes', 'residence_street', 'rejection_reason'])) {
+                    $update_data[$f] = sanitize_textarea_field($data[$f]);
+                } elseif (strpos($f, '_url') !== false) {
+                    $update_data[$f] = esc_url_raw($data[$f]);
+                } elseif ($f === 'email') {
+                    $update_data[$f] = sanitize_email($data[$f]);
+                } elseif ($f === 'current_stage') {
+                    $update_data[$f] = intval($data[$f]);
+                } else {
+                    $update_data[$f] = sanitize_text_field($data[$f]);
+                }
+            }
+        }
+
+        return $wpdb->update("{$wpdb->prefix}sm_membership_requests", $update_data, array('id' => intval($id)));
+    }
+
+    public static function get_membership_request($id) {
+        global $wpdb;
+        return $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}sm_membership_requests WHERE id = %d", $id));
+    }
+
+    public static function get_membership_request_by_national_id($national_id) {
+        global $wpdb;
+        return $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}sm_membership_requests WHERE national_id = %s", $national_id));
+    }
+
+    public static function get_membership_requests($status = null) {
+        global $wpdb;
+        $query = "SELECT * FROM {$wpdb->prefix}sm_membership_requests";
+        if ($status) {
+            return $wpdb->get_results($wpdb->prepare($query . " WHERE status = %s ORDER BY created_at DESC", $status));
+        }
+        return $wpdb->get_results($query . " ORDER BY created_at DESC");
     }
 }

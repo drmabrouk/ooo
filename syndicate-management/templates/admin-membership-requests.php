@@ -1,16 +1,18 @@
 <?php if (!defined('ABSPATH')) exit; ?>
 <?php
 global $wpdb;
-$requests = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}sm_membership_requests WHERE status = 'pending' ORDER BY created_at DESC");
+// Fetch all non-approved/non-rejected requests
+$requests = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}sm_membership_requests WHERE status NOT IN ('approved', 'rejected') ORDER BY created_at DESC");
 $govs = SM_Settings::get_governorates();
-$grades = SM_Settings::get_professional_grades();
-$specs = SM_Settings::get_specializations();
 ?>
 <div class="sm-content-wrapper" dir="rtl">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-        <h2 style="margin:0; font-weight: 800; color: var(--sm-dark-color);">طلبات العضوية الجديدة</h2>
+        <div>
+            <h2 style="margin:0; font-weight: 800; color: var(--sm-dark-color);">طلبات العضوية والالتحاق</h2>
+            <p style="margin:5px 0 0 0; color:#64748b; font-size:14px;">مراجعة طلبات الانضمام الجديدة، التحقق من الدفع، وفحص الوثائق الرقمية.</p>
+        </div>
         <div style="background: var(--sm-primary-color); color: #fff; padding: 5px 15px; border-radius: 20px; font-size: 12px; font-weight: 700;">
-            بانتظار المراجعة: <?php echo count($requests); ?>
+            بانتظار الإجراء: <?php echo count($requests); ?>
         </div>
     </div>
 
@@ -18,37 +20,80 @@ $specs = SM_Settings::get_specializations();
         <table class="sm-table">
             <thead>
                 <tr>
-                    <th>الاسم الكامل</th>
-                    <th>الرقم القومي</th>
-                    <th>المحافظة</th>
-                    <th>الدرجة / التخصص</th>
-                    <th>بيانات التواصل</th>
-                    <th>التاريخ</th>
+                    <th>المتقدم والبيانات الأساسية</th>
+                    <th>البيانات الأكاديمية</th>
+                    <th>العنوان والتواصل</th>
+                    <th>حالة الطلب ومرحلته</th>
+                    <th>التحقق من الدفع والوثائق</th>
                     <th>الإجراءات</th>
                 </tr>
             </thead>
             <tbody>
                 <?php if (empty($requests)): ?>
-                    <tr><td colspan="7" style="text-align: center; padding: 50px; color: #94a3b8;">لا توجد طلبات عضوية جديدة حالياً.</td></tr>
+                    <tr><td colspan="6" style="text-align: center; padding: 50px; color: #94a3b8;">لا توجد طلبات معلقة حالياً.</td></tr>
                 <?php else: ?>
                     <?php foreach ($requests as $r): ?>
                         <tr>
-                            <td style="font-weight: 800;"><?php echo esc_html($r->name); ?></td>
-                            <td style="font-weight: 700; color: var(--sm-primary-color);"><?php echo esc_html($r->national_id); ?></td>
-                            <td><?php echo esc_html($govs[$r->governorate] ?? $r->governorate); ?></td>
                             <td>
-                                <div style="font-size: 12px; font-weight: 600;"><?php echo esc_html($grades[$r->professional_grade] ?? $r->professional_grade); ?></div>
-                                <div style="font-size: 11px; color: #64748b;"><?php echo esc_html($specs[$r->specialization] ?? $r->specialization); ?></div>
+                                <div style="font-weight: 800; color:var(--sm-dark-color);"><?php echo esc_html($r->name); ?></div>
+                                <div style="font-size: 12px; font-weight: 700; color: var(--sm-primary-color); margin-top:4px;">
+                                    <?php echo esc_html($r->national_id); ?>
+                                </div>
                             </td>
                             <td>
-                                <div style="font-size: 12px;"><?php echo esc_html($r->phone); ?></div>
-                                <div style="font-size: 11px; color: #64748b;"><?php echo esc_html($r->email); ?></div>
+                                <div style="font-size: 12px; font-weight: 600;"><?php echo esc_html($r->university); ?></div>
+                                <div style="font-size: 11px; color: #64748b;"><?php echo esc_html($r->faculty); ?> - <?php echo esc_html($r->department); ?></div>
+                                <div style="font-size: 11px; color: #94a3b8;"><?php echo esc_html($r->graduation_date); ?></div>
                             </td>
-                            <td><?php echo date('Y-m-d', strtotime($r->created_at)); ?></td>
                             <td>
-                                <div style="display: flex; gap: 8px;">
-                                    <button class="sm-btn" style="padding: 5px 15px; font-size: 11px; background: #27ae60;" onclick="processMembership(<?php echo $r->id; ?>, 'approved')">قبول</button>
-                                    <button class="sm-btn" style="padding: 5px 15px; font-size: 11px; background: #e53e3e;" onclick="processMembership(<?php echo $r->id; ?>, 'rejected')">رفض</button>
+                                <div style="font-size: 12px;"><?php echo esc_html($govs[$r->residence_governorate] ?? $r->residence_governorate); ?></div>
+                                <div style="font-size: 11px; color: #64748b;"><?php echo esc_html($r->residence_city); ?>, <?php echo esc_html($r->residence_street); ?></div>
+                                <div style="font-size: 12px; margin-top:5px; font-weight:600;"><?php echo esc_html($r->phone); ?></div>
+                            </td>
+                            <td>
+                                <?php
+                                $status_labels = [
+                                    'Pending Payment Verification' => ['label' => 'بانتظار تأكيد الدفع', 'color' => '#f59e0b'],
+                                    'Payment Approved' => ['label' => 'تم قبول الدفع - انتظار الوثائق', 'color' => '#3b82f6'],
+                                    'Pending Document Verification' => ['label' => 'بانتظار فحص الوثائق', 'color' => '#8b5cf6'],
+                                    'pending' => ['label' => 'قيد المراجعة الأولية', 'color' => '#64748b']
+                                ];
+                                $s = $status_labels[$r->status] ?? ['label' => $r->status, 'color' => '#64748b'];
+                                ?>
+                                <span style="display:inline-block; padding:4px 10px; border-radius:6px; background:<?php echo $s['color']; ?>15; color:<?php echo $s['color']; ?>; font-size:11px; font-weight:700;">
+                                    <?php echo $s['label']; ?>
+                                </span>
+                                <div style="font-size:10px; color:#94a3b8; margin-top:4px;">المرحلة: <?php echo $r->current_stage; ?> من 3</div>
+                            </td>
+                            <td>
+                                <?php if($r->current_stage >= 2): ?>
+                                    <div style="font-size:11px; margin-bottom:5px;">
+                                        <strong>الدفع:</strong> <?php echo esc_html($r->payment_method); ?>
+                                        <?php if($r->payment_screenshot_url): ?>
+                                            <a href="<?php echo esc_url($r->payment_screenshot_url); ?>" target="_blank" title="إيصال الدفع">📸</a>
+                                        <?php endif; ?><br>
+                                        <strong>المرجع:</strong> <code style="background:#f1f5f9; padding:2px 4px;"><?php echo esc_html($r->payment_reference); ?></code>
+                                    </div>
+                                <?php endif; ?>
+                                <?php if($r->current_stage == 3): ?>
+                                    <div style="display:flex; gap:5px; margin-top:5px;">
+                                        <?php if($r->doc_qualification_url): ?><a href="<?php echo esc_url($r->doc_qualification_url); ?>" target="_blank" title="شهادة التخرج" style="text-decoration:none; font-size:14px;">🎓</a><?php endif; ?>
+                                        <?php if($r->doc_id_url): ?><a href="<?php echo esc_url($r->doc_id_url); ?>" target="_blank" title="البطاقة الشخصية" style="text-decoration:none; font-size:14px;">🪪</a><?php endif; ?>
+                                        <?php if($r->doc_military_url): ?><a href="<?php echo esc_url($r->doc_military_url); ?>" target="_blank" title="شهادة العسكرية" style="text-decoration:none; font-size:14px;">🎖️</a><?php endif; ?>
+                                        <?php if($r->doc_criminal_url): ?><a href="<?php echo esc_url($r->doc_criminal_url); ?>" target="_blank" title="فيش جنائي" style="text-decoration:none; font-size:14px;">📄</a><?php endif; ?>
+                                        <?php if($r->doc_photo_url): ?><a href="<?php echo esc_url($r->doc_photo_url); ?>" target="_blank" title="الصورة الشخصية" style="text-decoration:none; font-size:14px;">👤</a><?php endif; ?>
+                                    </div>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <div style="display: flex; flex-direction:column; gap: 5px;">
+                                    <?php if($r->status === 'Pending Payment Verification'): ?>
+                                        <button class="sm-btn" style="padding: 5px 10px; font-size: 11px; background: #27ae60;" onclick="processMembership(<?php echo $r->id; ?>, 'Payment Approved')">قبول الدفع</button>
+                                    <?php elseif($r->status === 'Pending Document Verification'): ?>
+                                        <button class="sm-btn" style="padding: 5px 10px; font-size: 11px; background: #27ae60;" onclick="processMembership(<?php echo $r->id; ?>, 'approved')">قبول نهائي وتفعيل</button>
+                                    <?php endif; ?>
+
+                                    <button class="sm-btn" style="padding: 5px 10px; font-size: 11px; background: #e53e3e;" onclick="rejectMembership(<?php echo $r->id; ?>)">رفض الطلب</button>
                                 </div>
                             </td>
                         </tr>
@@ -61,8 +106,10 @@ $specs = SM_Settings::get_specializations();
 
 <script>
 function processMembership(requestId, status) {
-    const label = status === 'approved' ? 'قبول' : 'رفض';
-    if (!confirm(`هل أنت متأكد من ${label} هذا الطلب؟`)) return;
+    let msg = "هل أنت متأكد من تغيير حالة الطلب؟";
+    if(status === 'approved') msg = "هل أنت متأكد من القبول النهائي؟ سيتم إنشاء حساب عضو وتفعيل دخوله للنظام.";
+
+    if (!confirm(msg)) return;
 
     const fd = new FormData();
     fd.append('action', 'sm_process_membership_request');
@@ -74,7 +121,31 @@ function processMembership(requestId, status) {
     .then(r => r.json())
     .then(res => {
         if (res.success) {
-            alert('تمت معالجة الطلب بنجاح');
+            alert('تم تحديث حالة الطلب بنجاح');
+            location.reload();
+        } else {
+            alert('خطأ: ' + res.data);
+        }
+    });
+}
+
+function rejectMembership(requestId) {
+    const reason = prompt("يرجى إدخال سبب الرفض ليتمكن المتقدم من رؤيته:");
+    if (reason === null) return;
+    if (!reason) return alert("يجب إدخال سبب الرفض.");
+
+    const fd = new FormData();
+    fd.append('action', 'sm_process_membership_request');
+    fd.append('request_id', requestId);
+    fd.append('status', 'rejected');
+    fd.append('reason', reason);
+    fd.append('nonce', '<?php echo wp_create_nonce("sm_admin_action"); ?>');
+
+    fetch(ajaxurl, { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(res => {
+        if (res.success) {
+            alert('تم رفض الطلب بنجاح');
             location.reload();
         } else {
             alert('خطأ: ' + res.data);

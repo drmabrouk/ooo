@@ -380,11 +380,11 @@ class SM_Public {
 
         // Registration Modal (Membership Request) - Sequential 3-Step Form
         $output .= '<div id="sm-registration-modal" class="sm-modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(17,31,53,0.85); z-index:10000; justify-content:center; align-items:center; padding:20px; backdrop-filter: blur(4px);">';
-        $output .= '<div class="sm-modal-content" style="background:white; width:100%; max-width:450px; padding:40px; border-radius:24px; position:relative; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);">';
+        $output .= '<div class="sm-modal-content" style="background:white; width:100%; max-width:600px; padding:40px; border-radius:24px; position:relative; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);">';
         $output .= '<button onclick="smToggleRegistration()" style="position:absolute; top:20px; left:20px; border:none; background:none; font-size:24px; cursor:pointer; color:#94a3b8; transition: 0.2s;">&times;</button>';
-        $output .= '<div style="text-align:center; margin-bottom:30px;"><h3 style="margin:0; font-weight:900; font-size:1.5em; color:var(--sm-dark-color);">طلب عضوية جديدة</h3><p style="color:#64748b; font-size:13px; margin-top:5px;">بوابة الانضمام الرقمية الموحدة</p></div>';
+        $output .= '<div style="text-align:center; margin-bottom:30px;"><h3 style="margin:0; font-weight:900; font-size:1.5em; color:var(--sm-dark-color);">طلب عضوية جديدة</h3><p style="color:#64748b; font-size:13px; margin-top:5px;">المرحلة الأولى: إدخال البيانات الشخصية والمهنية</p></div>';
 
-        $output .= '<form id="sm-membership-request-form">';
+        $output .= '<form id="sm-membership-request-form" enctype="multipart/form-data">';
 
         // Step Indicators
         $output .= '<div class="sm-steps-indicator" style="display:flex; justify-content:center; gap:12px; margin-bottom:30px;">';
@@ -393,45 +393,93 @@ class SM_Public {
         $output .= '<span id="reg-dot-3" style="width:32px; height:32px; background:#edf2f7; color:#718096; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:14px; transition:0.3s;">3</span>';
         $output .= '</div>';
 
-        // Step 1: Identity
+        // Step 1: Data Entry
         $output .= '<div id="reg-step-1" class="reg-step">';
-        $output .= '<p style="font-size:14px; color:#4a5568; margin-bottom:20px; text-align:center; font-weight:600;">المرحلة الأولى: البيانات التعريفية</p>';
-        $output .= '<div class="sm-form-group"><label class="sm-label">الاسم الرباعي الكامل:</label><input name="name" type="text" class="sm-input" required placeholder="الاسم كما في بطاقة الرقم القومي"></div>';
-        $output .= '<div class="sm-form-group"><label class="sm-label">الرقم القومي (14 رقم):</label><input name="national_id" type="text" class="sm-input" required maxlength="14" placeholder="2xxxxxxxxxxxxx"></div>';
-        $output .= '<div class="sm-form-group"><label class="sm-label">المحافظة:</label><select name="governorate" class="sm-select" required><option value="">-- اختر المحافظة --</option>';
+        $output .= '<div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">';
+        $output .= '<div class="sm-form-group" style="grid-column: span 2;"><label class="sm-label">الاسم الرباعي الكامل:</label><input name="name" type="text" class="sm-input" required></div>';
+        $output .= '<div class="sm-form-group"><label class="sm-label">الرقم القومي (14 رقم):</label><input name="national_id" type="text" class="sm-input" required maxlength="14"></div>';
+        $output .= '<div class="sm-form-group"><label class="sm-label">الجامعة:</label><input name="university" type="text" class="sm-input" required></div>';
+        $output .= '<div class="sm-form-group"><label class="sm-label">الكلية:</label><input name="faculty" type="text" class="sm-input" required></div>';
+        $output .= '<div class="sm-form-group"><label class="sm-label">القسم:</label><input name="department" type="text" class="sm-input" required></div>';
+        $output .= '<div class="sm-form-group"><label class="sm-label">تاريخ التخرج:</label><input name="graduation_date" type="date" class="sm-input" required></div>';
+        $output .= '<div class="sm-form-group"><label class="sm-label">المؤهل الدراسي:</label><select name="academic_degree" class="sm-select" required>';
+        $degrees = ['بكالوريوس' => 'بكالوريوس', 'دبلومات عليا' => 'دبلومات عليا', 'ماجستير' => 'ماجستير', 'دكتوراه' => 'دكتوراه'];
+        foreach($degrees as $k=>$v) $output .= "<option value='$k'>$v</option>";
+        $output .= '</select></div>';
+        $output .= '<div class="sm-form-group"><label class="sm-label">محافظة الإقامة:</label><select name="residence_governorate" class="sm-select" required><option value="">-- اختر --</option>';
         foreach(SM_Settings::get_governorates() as $k=>$v) $output .= "<option value='$k'>$v</option>";
         $output .= '</select></div>';
-        $output .= '<button type="button" onclick="smRegNext(2)" class="sm-btn" style="width:100%; margin-top:10px;">التالي: البيانات المهنية</button>';
-        $output .= '</div>';
-
-        // Step 2: Professional
-        $output .= '<div id="reg-step-2" class="reg-step" style="display:none;">';
-        $output .= '<p style="font-size:14px; color:#4a5568; margin-bottom:20px; text-align:center; font-weight:600;">المرحلة الثانية: التخصص والدرجة</p>';
-        $output .= '<div class="sm-form-group"><label class="sm-label">الدرجة الوظيفية:</label><select name="professional_grade" class="sm-select">';
-        foreach(SM_Settings::get_professional_grades() as $k=>$v) $output .= "<option value='$k'>$v</option>";
-        $output .= '</select></div>';
-        $output .= '<div class="sm-form-group"><label class="sm-label">التخصص:</label><select name="specialization" class="sm-select">';
-        foreach(SM_Settings::get_specializations() as $k=>$v) $output .= "<option value='$k'>$v</option>";
+        $output .= '<div class="sm-form-group"><label class="sm-label">مدينة الإقامة:</label><input name="residence_city" type="text" class="sm-input" required></div>';
+        $output .= '<div class="sm-form-group" style="grid-column: span 2;"><label class="sm-label">الشارع / القرية:</label><input name="residence_street" type="text" class="sm-input" required></div>';
+        $output .= '<div class="sm-form-group"><label class="sm-label">لجنة النقابة التابع لها:</label><select name="governorate" class="sm-select" required><option value="">-- اختر --</option>';
+        foreach(SM_Settings::get_governorates() as $k=>$v) $output .= "<option value='$k'>$v</option>";
         $output .= '</select></div>';
         $output .= '<div class="sm-form-group"><label class="sm-label">رقم الهاتف الجوال:</label><input name="phone" type="text" class="sm-input" required placeholder="01xxxxxxxxx"></div>';
+        $output .= '<div class="sm-form-group" style="grid-column: span 2;"><label class="sm-label">البريد الإلكتروني:</label><input name="email" type="email" class="sm-input" required placeholder="example@domain.com"></div>';
+        $output .= '</div>';
+        $output .= '<button type="button" onclick="smRegNext(2)" class="sm-btn" style="width:100%; margin-top:10px;">التالي: تأكيد الدفع</button>';
+        $output .= '</div>';
+
+        // Step 2: Payment Confirmation
+        $output .= '<div id="reg-step-2" class="reg-step" style="display:none;">';
+        $output .= '<div style="background: #fff5f5; padding: 20px; border-radius: 12px; border: 1px solid #feb2b2; margin-bottom: 25px; text-align: center;">';
+        $output .= '<h4 style="margin: 0; color: #c53030;">قيمة رسوم القيد: 480 جنيه مصري</h4>';
+        $output .= '<p style="font-size: 13px; color: #7b2c2c; margin-top: 5px;">يرجى سداد المبلغ عبر أحد الطرق الموضحة أدناه</p>';
+        $output .= '</div>';
+
+        $output .= '<div class="sm-form-group"><label class="sm-label">طريقة الدفع:</label><select id="reg_payment_method" name="payment_method" class="sm-select" onchange="smTogglePaymentInstructions(this.value)">';
+        $output .= '<option value="wallet">تحويل محفظة إلكترونية (فودافون كاش / غيرها)</option>';
+        $output .= '<option value="bank">تحويل بنكي (IBAN)</option>';
+        $output .= '</select></div>';
+
+        $output .= '<div id="pay_instr_wallet" class="sm-info-box" style="margin-bottom: 20px; padding: 15px; background: #f8fafc; border-radius: 10px; font-size: 13px; line-height: 1.6;">';
+        $output .= '<strong>تعليمات الدفع:</strong> قم بتحويل مبلغ 480 ج.م إلى الرقم الآتي: <strong>01000000000</strong> ثم أدخل رقم العملية المرجعي وصورة التحويل أدناه.';
+        $output .= '</div>';
+
+        $output .= '<div id="pay_instr_bank" class="sm-info-box" style="display:none; margin-bottom: 20px; padding: 15px; background: #f8fafc; border-radius: 10px; font-size: 13px; line-height: 1.6;">';
+        $output .= '<strong>تعليمات الدفع:</strong> قم بالتحويل إلى الحساب البنكي رقم: <strong>EG0000000000000000000000</strong> باسم النقابة، ثم أرفق بيانات التحويل أدناه.';
+        $output .= '</div>';
+
+        $output .= '<div class="sm-form-group"><label class="sm-label">رقم العملية المرجعي / التسلسلي:</label><input name="payment_reference" type="text" class="sm-input" required></div>';
+        $output .= '<div class="sm-form-group"><label class="sm-label">صورة إيصال التحويل / لقطة الشاشة:</label><input name="payment_screenshot" type="file" class="sm-input" required accept="image/*"></div>';
+
         $output .= '<div style="display:grid; grid-template-columns: 1fr 2fr; gap:10px;">';
         $output .= '<button type="button" onclick="smRegNext(1)" class="sm-btn sm-btn-outline" style="width:100%;">السابق</button>';
-        $output .= '<button type="button" onclick="smRegNext(3)" class="sm-btn" style="width:100%;">التالي: تأكيد الطلب</button>';
+        $output .= '<button type="submit" class="sm-btn" style="width:100%;">إرسال الطلب للمراجعة</button>';
         $output .= '</div>';
         $output .= '</div>';
 
-        // Step 3: Account & Submission
+        // Step 3: Digital Documents (Accessed after admin approval of Stage 2)
         $output .= '<div id="reg-step-3" class="reg-step" style="display:none;">';
-        $output .= '<p style="font-size:14px; color:#4a5568; margin-bottom:20px; text-align:center; font-weight:600;">المرحلة الثالثة: البريد الإلكتروني</p>';
-        $output .= '<div class="sm-form-group"><label class="sm-label">البريد الإلكتروني:</label><input name="email" type="email" class="sm-input" required placeholder="example@domain.com"></div>';
-        $output .= '<div class="sm-form-group"><label class="sm-label">ملاحظات إضافية (اختياري):</label><textarea name="notes" class="sm-textarea" rows="3" placeholder="أي معلومات إضافية تود إضافتها..."></textarea></div>';
-        $output .= '<div style="display:grid; grid-template-columns: 1fr 2fr; gap:10px;">';
-        $output .= '<button type="button" onclick="smRegNext(2)" class="sm-btn sm-btn-outline" style="width:100%;">السابق</button>';
-        $output .= '<button type="submit" class="sm-btn" style="width:100%;">إرسال طلب الانضمام</button>';
+        $output .= '<div style="background: #f0fff4; padding: 20px; border-radius: 12px; border: 1px solid #c6f6d5; margin-bottom: 25px;">';
+        $output .= '<h4 style="margin: 0; color: #2f855a; text-align: center;">تمت الموافقة على الدفع. يرجى رفع الوثائق الرقمية</h4>';
         $output .= '</div>';
+
+        $output .= '<div class="sm-form-group"><label class="sm-label">شهادة المؤهل الدراسي (وجهين - PDF):</label><input name="doc_qualification" type="file" class="sm-input" required accept="application/pdf"></div>';
+        $output .= '<div class="sm-form-group"><label class="sm-label">بطاقة الرقم القومي (وجهين - PDF):</label><input name="doc_id" type="file" class="sm-input" required accept="application/pdf"></div>';
+        $output .= '<div class="sm-form-group"><label class="sm-label">شهادة الخدمة العسكرية (للذكور - PDF):</label><input name="doc_military" type="file" class="sm-input" accept="application/pdf"></div>';
+        $output .= '<div class="sm-form-group"><label class="sm-label">صحيفة الحالة الجنائية (فيش - PDF):</label><input name="doc_criminal" type="file" class="sm-input" required accept="application/pdf"></div>';
+        $output .= '<div class="sm-form-group"><label class="sm-label">صورة شخصية حديثة (Image):</label><input name="doc_photo" type="file" class="sm-input" required accept="image/*"></div>';
+
+        $output .= '<div style="background: #fffaf0; padding: 15px; border-radius: 10px; border: 1px solid #feebc8; margin-top: 20px; font-size: 12px; line-height: 1.6;">';
+        $output .= '<strong>ملاحظة هامة:</strong> بعد رفع الوثائق الرقمية، يتوجب عليك إرسال أصول المستندات عبر البريد المصري إلى مقر النقابة لإتمام التفعيل النهائي.';
+        $output .= '</div>';
+
+        $output .= '<button type="button" onclick="smSubmitStage3()" class="sm-btn" style="width:100%; margin-top:20px;">رفع الوثائق الرقمية وتأكيد الإرسال</button>';
         $output .= '</div>';
 
         $output .= '</form>';
+
+        // Request Status Tracking Feature
+        $output .= '<div id="sm-track-registration" style="margin-top: 40px; border-top: 1px solid #eee; padding-top: 30px;">';
+        $output .= '<h4 style="text-align: center; margin-bottom: 20px; font-weight: 800;">متابعة حالة طلب القيد</h4>';
+        $output .= '<div style="display: flex; gap: 10px; max-width: 400px; margin: 0 auto;">';
+        $output .= '<input type="text" id="track_national_id" class="sm-input" placeholder="أدخل الرقم القومي للمتابعة" maxlength="14">';
+        $output .= '<button onclick="smTrackRequest()" class="sm-btn" style="width: auto; white-space: nowrap;">متابعة</button>';
+        $output .= '</div>';
+        $output .= '<div id="track-result" style="margin-top: 20px; display: none;"></div>';
+        $output .= '</div>';
+
         $output .= '</div></div>';
 
         // Activation Modal (3-Step Sequential Workflow)
@@ -489,23 +537,19 @@ class SM_Public {
         }
         function smRegNext(step) {
             if (step === 2) {
-                const name = document.querySelector("#sm-membership-request-form input[name=\"name\"]").value;
+                const required = ["name", "national_id", "university", "faculty", "department", "graduation_date", "residence_street", "residence_city", "residence_governorate", "governorate", "phone", "email"];
+                for (const name of required) {
+                    const el = document.querySelector(`#sm-membership-request-form [name="${name}"]`);
+                    if (!el.value) return alert("يرجى ملء كافة الحقول المطلوبة قبل الانتقال للخطوة التالية.");
+                }
                 const nid = document.querySelector("#sm-membership-request-form input[name=\"national_id\"]").value;
-                const gov = document.querySelector("#sm-membership-request-form select[name=\"governorate\"]").value;
-                if (!name || nid.length !== 14 || !gov) {
-                    return alert("يرجى التأكد من إدخال الاسم الرباعي والرقم القومي (14 رقم) واختيار المحافظة.");
-                }
-            }
-            if (step === 3) {
-                const phone = document.querySelector("#sm-membership-request-form input[name=\"phone\"]").value;
-                if (phone.length < 10) {
-                    return alert("يرجى إدخال رقم هاتف صحيح.");
-                }
+                if (nid.length !== 14) return alert("الرقم القومي يجب أن يتكون من 14 رقم.");
             }
             document.querySelectorAll(".reg-step").forEach(s => s.style.display = "none");
             document.getElementById("reg-step-" + step).style.display = "block";
             for (let i = 1; i <= 3; i++) {
                 const dot = document.getElementById("reg-dot-" + i);
+                if (!dot) continue;
                 if (i < step) {
                     dot.style.background = "#38a169";
                     dot.style.color = "white";
@@ -520,6 +564,45 @@ class SM_Public {
                     dot.innerText = i;
                 }
             }
+        }
+        function smTogglePaymentInstructions(val) {
+            document.getElementById("pay_instr_wallet").style.display = val === "wallet" ? "block" : "none";
+            document.getElementById("pay_instr_bank").style.display = val === "bank" ? "block" : "none";
+        }
+        function smTrackRequest() {
+            const nid = document.getElementById("track_national_id").value;
+            if (nid.length !== 14) return alert("يرجى إدخال رقم قومي صحيح.");
+            const fd = new FormData(); fd.append("action", "sm_track_membership_request"); fd.append("national_id", nid);
+            fetch("'.admin_url('admin-ajax.php').'", {method:"POST", body:fd}).then(r=>r.json()).then(res=>{
+                const div = document.getElementById("track-result"); div.style.display = "block";
+                if(res.success) {
+                    const r = res.data;
+                    let html = `<div style="padding:20px; border-radius:12px; background:#f8fafc; border:1px solid #e2e8f0;">
+                        <h5 style="margin:0 0 10px 0; font-weight:800;">حالة الطلب: <span style="color:var(--sm-primary-color);">${r.status}</span></h5>
+                        <p style="font-size:13px; color:#64748b; margin-bottom:15px;">المرحلة الحالية: ${r.current_stage} من 3</p>`;
+                    if(r.rejection_reason) html += `<p style="color:#e53e3e; font-size:12px;"><strong>سبب الرفض:</strong> ${r.rejection_reason}</p>`;
+
+                    if(r.status === "Payment Approved" || r.current_stage == 3) {
+                        html += `<button onclick="smRegNext(3)" class="sm-btn" style="width:100%;">الانتقال لمرحلة رفع الوثائق</button>`;
+                    } else if(r.status === "Rejected") {
+                         html += `<p style="font-size:12px;">يرجى مراجعة البيانات والتحويل مرة أخرى أو التواصل مع الدعم.</p>`;
+                    }
+                    html += "</div>";
+                    div.innerHTML = html;
+                } else div.innerHTML = `<div style="color:#e53e3e; text-align:center; font-size:13px;">${res.data}</div>`;
+            });
+        }
+        async function smSubmitStage3() {
+            const form = document.getElementById("sm-membership-request-form");
+            const fd = new FormData(form);
+            fd.append("action", "sm_submit_membership_request_stage3");
+            fd.append("national_id", document.getElementById("track_national_id").value || fd.get("national_id"));
+
+            const btn = event.target; btn.disabled = true; btn.innerText = "جاري الرفع...";
+            fetch("'.admin_url('admin-ajax.php').'", {method:"POST", body:fd}).then(r=>r.json()).then(res=>{
+                if(res.success) { alert("تم رفع الوثائق بنجاح. يرجى إرسال الأصول عبر البريد المصري."); location.reload(); }
+                else { alert(res.data); btn.disabled = false; btn.innerText = "رفع الوثائق الرقمية وتأكيد الإرسال"; }
+            });
         }
         function smRequestOTP() {
             const nid = document.getElementById("rec_national_id").value;
@@ -1891,18 +1974,35 @@ class SM_Public {
             wp_send_json_error('عذراً، يوجد طلب عضوية قيد المراجعة بهذا الرقم القومي.');
         }
 
-        $res = $wpdb->insert("{$wpdb->prefix}sm_membership_requests", [
+        $insert_data = [
             'national_id' => $nid,
             'name' => sanitize_text_field($_POST['name']),
+            'university' => sanitize_text_field($_POST['university']),
+            'faculty' => sanitize_text_field($_POST['faculty']),
+            'department' => sanitize_text_field($_POST['department']),
+            'graduation_date' => sanitize_text_field($_POST['graduation_date']),
+            'residence_street' => sanitize_text_field($_POST['residence_street']),
+            'residence_city' => sanitize_text_field($_POST['residence_city']),
+            'residence_governorate' => sanitize_text_field($_POST['residence_governorate']),
             'governorate' => sanitize_text_field($_POST['governorate']),
-            'professional_grade' => sanitize_text_field($_POST['professional_grade']),
-            'specialization' => sanitize_text_field($_POST['specialization']),
             'phone' => sanitize_text_field($_POST['phone']),
             'email' => sanitize_email($_POST['email']),
-            'notes' => sanitize_textarea_field($_POST['notes']),
-            'status' => 'pending',
+            'payment_method' => sanitize_text_field($_POST['payment_method']),
+            'payment_reference' => sanitize_text_field($_POST['payment_reference']),
+            'status' => 'Pending Payment Verification',
+            'current_stage' => 2,
             'created_at' => current_time('mysql')
-        ]);
+        ];
+
+        if (!empty($_FILES['payment_screenshot'])) {
+            require_once(ABSPATH . 'wp-admin/includes/file.php');
+            $upload = wp_handle_upload($_FILES['payment_screenshot'], ['test_form' => false]);
+            if (isset($upload['url'])) {
+                $insert_data['payment_screenshot_url'] = $upload['url'];
+            }
+        }
+
+        $res = $wpdb->insert("{$wpdb->prefix}sm_membership_requests", $insert_data);
 
         if ($res) wp_send_json_success();
         else wp_send_json_error('فشل في إرسال الطلب، يرجى المحاولة لاحقاً.');
@@ -1913,25 +2013,45 @@ class SM_Public {
         check_ajax_referer('sm_admin_action', 'nonce');
 
         $request_id = intval($_POST['request_id']);
-        $status = sanitize_text_field($_POST['status']); // 'approved' or 'rejected'
+        $status = sanitize_text_field($_POST['status']);
+        $reason = sanitize_text_field($_POST['reason'] ?? '');
 
         global $wpdb;
         $req = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}sm_membership_requests WHERE id = %d", $request_id));
         if (!$req) wp_send_json_error('Request not found');
 
         if ($status === 'approved') {
-            // Move to main members table
             $member_data = (array)$req;
-            unset($member_data['id'], $member_data['status'], $member_data['processed_by'], $member_data['created_at']);
+            // Clean up non-member fields
+            $exclude = [
+                'id', 'status', 'processed_by', 'created_at', 'current_stage',
+                'payment_method', 'payment_reference', 'payment_screenshot_url',
+                'doc_qualification_url', 'doc_id_url', 'doc_military_url',
+                'doc_criminal_url', 'doc_photo_url', 'rejection_reason', 'notes'
+            ];
+            foreach ($exclude as $key) unset($member_data[$key]);
 
             $member_id = SM_DB::add_member($member_data);
             if (is_wp_error($member_id)) wp_send_json_error($member_id->get_error_message());
+
+            // Log to Finance
+            SM_Finance::record_payment([
+                'member_id' => $member_id,
+                'amount' => 480,
+                'payment_type' => 'membership_fee',
+                'payment_date' => current_time('mysql'),
+                'details_ar' => 'رسوم اشتراك عضوية جديدة - طلب رقم ' . $request_id,
+                'notes' => 'طريقة الدفع: ' . ($req->payment_method ?: 'manual') . ' - مرجع: ' . ($req->payment_reference ?: 'N/A')
+            ]);
         }
 
-        $wpdb->update("{$wpdb->prefix}sm_membership_requests", [
+        $update_data = [
             'status' => $status,
             'processed_by' => get_current_user_id()
-        ], ['id' => $request_id]);
+        ];
+        if ($reason) $update_data['notes'] = $reason;
+
+        $wpdb->update("{$wpdb->prefix}sm_membership_requests", $update_data, ['id' => $request_id]);
 
         SM_Logger::log('معالجة طلب عضوية', "تم {$status} طلب العضوية للرقم القومي: {$req->national_id}");
         wp_send_json_success();
@@ -2383,5 +2503,62 @@ class SM_Public {
         $id = intval($_POST['id']);
         if (SM_DB::update_ticket_status($id, 'closed')) wp_send_json_success();
         else wp_send_json_error('Failed to close ticket');
+    }
+
+    public function ajax_track_membership_request() {
+        $nid = sanitize_text_field($_POST['national_id']);
+        global $wpdb;
+        $req = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}sm_membership_requests WHERE national_id = %s", $nid));
+        if (!$req) wp_send_json_error('لا يوجد طلب بهذا الرقم القومي.');
+
+        $status_map = [
+            'Pending Payment Verification' => 'قيد مراجعة الدفع',
+            'Payment Approved' => 'تم قبول الدفع - بانتظار الوثائق',
+            'Pending Document Verification' => 'قيد مراجعة الوثائق',
+            'approved' => 'تم القبول والتحويل لعضوية مفعلة',
+            'rejected' => 'تم رفض الطلب',
+            'pending' => 'قيد المراجعة'
+        ];
+
+        wp_send_json_success([
+            'status' => $status_map[$req->status] ?? $req->status,
+            'current_stage' => $req->current_stage,
+            'rejection_reason' => $req->notes ?? ''
+        ]);
+    }
+
+    public function ajax_submit_membership_request_stage3() {
+        $nid = sanitize_text_field($_POST['national_id']);
+        global $wpdb;
+
+        if (!empty($_FILES)) {
+            require_once(ABSPATH . 'wp-admin/includes/file.php');
+            $urls = [];
+            $mapping = [
+                'doc_qualification' => 'doc_qualification_url',
+                'doc_id'            => 'doc_id_url',
+                'doc_military'      => 'doc_military_url',
+                'doc_criminal'      => 'doc_criminal_url',
+                'doc_photo'         => 'doc_photo_url'
+            ];
+
+            $update_data = [
+                'status' => 'Pending Document Verification',
+                'current_stage' => 3
+            ];
+
+            foreach ($mapping as $form_field => $db_column) {
+                if (!empty($_FILES[$form_field])) {
+                    $upload = wp_handle_upload($_FILES[$form_field], ['test_form' => false]);
+                    if (isset($upload['url'])) {
+                        $update_data[$db_column] = $upload['url'];
+                    }
+                }
+            }
+
+            $wpdb->update("{$wpdb->prefix}sm_membership_requests", $update_data, ['national_id' => $nid]);
+            wp_send_json_success();
+        }
+        wp_send_json_error('لم يتم رفع أي ملفات.');
     }
 }
