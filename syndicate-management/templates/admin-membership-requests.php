@@ -53,9 +53,10 @@ $govs = SM_Settings::get_governorates();
                             <td>
                                 <?php
                                 $status_labels = [
-                                    'Pending Payment Verification' => ['label' => 'بانتظار تأكيد الدفع', 'color' => '#f59e0b'],
+                                    'Payment Under Review' => ['label' => 'مراجعة الدفع', 'color' => '#f59e0b'],
                                     'Payment Approved' => ['label' => 'تم قبول الدفع - انتظار الوثائق', 'color' => '#3b82f6'],
-                                    'Pending Document Verification' => ['label' => 'بانتظار فحص الوثائق', 'color' => '#8b5cf6'],
+                                    'Awaiting Physical Documents' => ['label' => 'بانتظار الأصول (بعد الرقمية)', 'color' => '#8b5cf6'],
+                                    'Under Final Review' => ['label' => 'قيد المراجعة النهائية', 'color' => '#10b981'],
                                     'pending' => ['label' => 'قيد المراجعة الأولية', 'color' => '#64748b']
                                 ];
                                 $s = $status_labels[$r->status] ?? ['label' => $r->status, 'color' => '#64748b'];
@@ -87,10 +88,12 @@ $govs = SM_Settings::get_governorates();
                             </td>
                             <td>
                                 <div style="display: flex; flex-direction:column; gap: 5px;">
-                                    <?php if($r->status === 'Pending Payment Verification'): ?>
+                                    <?php if($r->status === 'Payment Under Review'): ?>
                                         <button class="sm-btn" style="padding: 5px 10px; font-size: 11px; background: #27ae60;" onclick="processMembership(<?php echo $r->id; ?>, 'Payment Approved')">قبول الدفع</button>
-                                    <?php elseif($r->status === 'Pending Document Verification'): ?>
-                                        <button class="sm-btn" style="padding: 5px 10px; font-size: 11px; background: #27ae60;" onclick="processMembership(<?php echo $r->id; ?>, 'approved')">قبول نهائي وتفعيل</button>
+                                    <?php elseif($r->status === 'Awaiting Physical Documents'): ?>
+                                        <button class="sm-btn" style="padding: 5px 10px; font-size: 11px; background: #3b82f6;" onclick="processMembership(<?php echo $r->id; ?>, 'Under Final Review')">استلام الأصول</button>
+                                    <?php elseif($r->status === 'Under Final Review'): ?>
+                                        <button class="sm-btn" style="padding: 5px 10px; font-size: 11px; background: #27ae60;" onclick="processMembership(<?php echo $r->id; ?>, 'approved')">اعتماد نهائي</button>
                                     <?php endif; ?>
 
                                     <button class="sm-btn" style="padding: 5px 10px; font-size: 11px; background: #e53e3e;" onclick="rejectMembership(<?php echo $r->id; ?>)">رفض الطلب</button>

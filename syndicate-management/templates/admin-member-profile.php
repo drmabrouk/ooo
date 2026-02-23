@@ -104,11 +104,27 @@ $acc_status = SM_Finance::get_member_status($member->id);
                 <h3 style="margin-top:0; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 20px;">البيانات الأساسية</h3>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                     <div><label class="sm-label">الرقم القومي:</label> <div class="sm-value"><?php echo esc_html($member->national_id); ?></div></div>
-                    <div><label class="sm-label">كود العضوية:</label> <div class="sm-value"><?php echo esc_html($member->member_code); ?></div></div>
-                    <div><label class="sm-label">التخصص:</label> <div class="sm-value"><?php echo esc_html($specs[$member->specialization] ?? $member->specialization); ?></div></div>
-                    <div><label class="sm-label">الدرجة العلمية:</label> <div class="sm-value"><?php echo esc_html($member->academic_degree); ?></div></div>
+                    <div><label class="sm-label">كود العضوية:</label> <div class="sm-value"><?php echo esc_html($member->membership_number); ?></div></div>
                     <div><label class="sm-label">رقم الهاتف:</label> <div class="sm-value"><?php echo esc_html($member->phone); ?></div></div>
                     <div><label class="sm-label">البريد الإلكتروني:</label> <div class="sm-value"><?php echo esc_html($member->email); ?></div></div>
+                </div>
+
+                <h4 style="margin: 20px 0 10px 0; color: var(--sm-primary-color);">البيانات الأكاديمية</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div><label class="sm-label">الجامعة:</label> <div class="sm-value"><?php echo esc_html($member->university); ?></div></div>
+                    <div><label class="sm-label">الكلية:</label> <div class="sm-value"><?php echo esc_html($member->faculty); ?></div></div>
+                    <div><label class="sm-label">القسم:</label> <div class="sm-value"><?php echo esc_html($member->department); ?></div></div>
+                    <div><label class="sm-label">تاريخ التخرج:</label> <div class="sm-value"><?php echo esc_html($member->graduation_date); ?></div></div>
+                    <div><label class="sm-label">التخصص:</label> <div class="sm-value"><?php echo esc_html($specs[$member->specialization] ?? $member->specialization); ?></div></div>
+                    <div><label class="sm-label">الدرجة العلمية:</label> <div class="sm-value"><?php echo esc_html($member->academic_degree); ?></div></div>
+                </div>
+
+                <h4 style="margin: 20px 0 10px 0; color: var(--sm-primary-color);">بيانات السكن والاتصال</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div><label class="sm-label">محافظة السكن:</label> <div class="sm-value"><?php echo esc_html($govs[$member->residence_governorate] ?? $member->residence_governorate); ?></div></div>
+                    <div><label class="sm-label">المدينة / المركز:</label> <div class="sm-value"><?php echo esc_html($member->residence_city); ?></div></div>
+                    <div style="grid-column: span 2;"><label class="sm-label">العنوان (الشارع / القرية):</label> <div class="sm-value"><?php echo esc_html($member->residence_street); ?></div></div>
+                    <div><label class="sm-label">محافظة الفرع (النقابة):</label> <div class="sm-value"><?php echo esc_html($govs[$member->governorate] ?? $member->governorate); ?></div></div>
                     <?php if ($member->wp_user_id): ?>
                         <?php $temp_pass = get_user_meta($member->wp_user_id, 'sm_temp_pass', true); if ($temp_pass): ?>
                             <div style="grid-column: span 2; background: #fffaf0; padding: 15px; border-radius: 8px; border: 1px solid #feebc8; margin-top: 10px;">
@@ -252,7 +268,7 @@ $acc_status = SM_Finance::get_member_status($member->id);
         </div>
     </div>
 
-    <!-- Edit Member Modal (Moved here to be functional) -->
+    <!-- Edit Member Modal -->
     <div id="edit-member-modal" class="sm-modal-overlay">
         <div class="sm-modal-content" style="max-width: 900px;">
             <div class="sm-modal-header"><h3>تعديل بيانات العضو</h3><button class="sm-modal-close" onclick="document.getElementById('edit-member-modal').style.display='none'">&times;</button></div>
@@ -263,12 +279,29 @@ $acc_status = SM_Finance::get_member_status($member->id);
                     <div class="sm-form-group"><label class="sm-label">الاسم الكامل:</label><input name="name" id="edit_name" type="text" class="sm-input" required></div>
                     <div class="sm-form-group"><label class="sm-label">الرقم القومي:</label><input name="national_id" id="edit_national_id" type="text" class="sm-input" required maxlength="14"></div>
                     <div class="sm-form-group"><label class="sm-label">الدرجة الوظيفية:</label><select name="professional_grade" id="edit_grade" class="sm-select"><?php foreach (SM_Settings::get_professional_grades() as $k => $v) echo "<option value='$k'>$v</option>"; ?></select></div>
+
+                    <div class="sm-form-group"><label class="sm-label">الجامعة:</label><input name="university" id="edit_university" type="text" class="sm-input"></div>
+                    <div class="sm-form-group"><label class="sm-label">الكلية:</label><input name="faculty" id="edit_faculty" type="text" class="sm-input"></div>
+                    <div class="sm-form-group"><label class="sm-label">القسم:</label><input name="department" id="edit_department" type="text" class="sm-input"></div>
+                    <div class="sm-form-group"><label class="sm-label">تاريخ التخرج:</label><input name="graduation_date" id="edit_grad_date" type="date" class="sm-input"></div>
+                    <div class="sm-form-group"><label class="sm-label">الدرجة العلمية:</label>
+                        <select name="academic_degree" id="edit_degree" class="sm-select">
+                            <option value="بكالوريوس">بكالوريوس</option>
+                            <option value="دبلومات عليا">دبلومات عليا</option>
+                            <option value="ماجستير">ماجستير</option>
+                            <option value="دكتوراه">دكتوراه</option>
+                        </select>
+                    </div>
                     <div class="sm-form-group"><label class="sm-label">التخصص:</label><select name="specialization" id="edit_spec" class="sm-select"><?php foreach (SM_Settings::get_specializations() as $k => $v) echo "<option value='$k'>$v</option>"; ?></select></div>
-                    <div class="sm-form-group"><label class="sm-label">المحافظة:</label><select name="governorate" id="edit_gov" class="sm-select"><?php foreach (SM_Settings::get_governorates() as $k => $v) echo "<option value='$k'>$v</option>"; ?></select></div>
+
+                    <div class="sm-form-group"><label class="sm-label">محافظة السكن:</label><select name="residence_governorate" id="edit_res_gov" class="sm-select"><?php foreach (SM_Settings::get_governorates() as $k => $v) echo "<option value='$k'>$v</option>"; ?></select></div>
+                    <div class="sm-form-group"><label class="sm-label">المدينة / المركز:</label><input name="residence_city" id="edit_res_city" type="text" class="sm-input"></div>
+                    <div class="sm-form-group"><label class="sm-label">محافظة الفرع:</label><select name="governorate" id="edit_gov" class="sm-select"><?php foreach (SM_Settings::get_governorates() as $k => $v) echo "<option value='$k'>$v</option>"; ?></select></div>
+
+                    <div class="sm-form-group" style="grid-column: span 3;"><label class="sm-label">العنوان (الشارع / القرية):</label><input name="residence_street" id="edit_res_street" type="text" class="sm-input"></div>
+
                     <div class="sm-form-group"><label class="sm-label">رقم الهاتف:</label><input name="phone" id="edit_phone" type="text" class="sm-input"></div>
                     <div class="sm-form-group"><label class="sm-label">البريد الإلكتروني:</label><input name="email" id="edit_email" type="email" class="sm-input"></div>
-                    <div class="sm-form-group"><label class="sm-label">تاريخ بدء العضوية:</label><input name="membership_start_date" id="edit_mem_start" type="date" class="sm-input"></div>
-                    <div class="sm-form-group"><label class="sm-label">تاريخ انتهاء العضوية:</label><input name="membership_expiration_date" id="edit_mem_expiry" type="date" class="sm-input" value="2024-12-31"></div>
                     <div class="sm-form-group" style="grid-column: span 3;"><label class="sm-label">ملاحظات:</label><textarea name="notes" id="edit_notes" class="sm-input" rows="2"></textarea></div>
                 </div>
                 <button type="submit" class="sm-btn">تحديث البيانات الآن</button>
@@ -291,9 +324,26 @@ $acc_status = SM_Finance::get_member_status($member->id);
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 25px;">
                     <div class="sm-form-group"><label class="sm-label">الاسم الكامل:</label><input type="text" name="name" class="sm-input" value="<?php echo esc_attr($member->name); ?>" required></div>
                     <div class="sm-form-group"><label class="sm-label">الرقم القومي:</label><input type="text" name="national_id" class="sm-input" value="<?php echo esc_attr($member->national_id); ?>" required maxlength="14"></div>
-                    <div class="sm-form-group"><label class="sm-label">الدرجة الوظيفية:</label><select name="professional_grade" class="sm-select"><?php foreach ($grades as $k => $v) echo "<option value='$k' ".selected($member->professional_grade, $k, false).">$v</option>"; ?></select></div>
+
+                    <div class="sm-form-group"><label class="sm-label">الجامعة:</label><input name="university" type="text" class="sm-input" value="<?php echo esc_attr($member->university); ?>"></div>
+                    <div class="sm-form-group"><label class="sm-label">الكلية:</label><input name="faculty" type="text" class="sm-input" value="<?php echo esc_attr($member->faculty); ?>"></div>
+                    <div class="sm-form-group"><label class="sm-label">القسم:</label><input name="department" type="text" class="sm-input" value="<?php echo esc_attr($member->department); ?>"></div>
+                    <div class="sm-form-group"><label class="sm-label">تاريخ التخرج:</label><input name="graduation_date" type="date" class="sm-input" value="<?php echo esc_attr($member->graduation_date); ?>"></div>
+                    <div class="sm-form-group"><label class="sm-label">الدرجة العلمية:</label>
+                        <select name="academic_degree" class="sm-select">
+                            <option value="بكالوريوس" <?php selected($member->academic_degree, 'بكالوريوس'); ?>>بكالوريوس</option>
+                            <option value="دبلومات عليا" <?php selected($member->academic_degree, 'دبلومات عليا'); ?>>دبلومات عليا</option>
+                            <option value="ماجستير" <?php selected($member->academic_degree, 'ماجستير'); ?>>ماجستير</option>
+                            <option value="دكتوراه" <?php selected($member->academic_degree, 'دكتوراه'); ?>>دكتوراه</option>
+                        </select>
+                    </div>
                     <div class="sm-form-group"><label class="sm-label">التخصص:</label><select name="specialization" class="sm-select"><?php foreach ($specs as $k => $v) echo "<option value='$k' ".selected($member->specialization, $k, false).">$v</option>"; ?></select></div>
-                    <div class="sm-form-group"><label class="sm-label">المحافظة:</label><select name="governorate" class="sm-select"><?php foreach ($govs as $k => $v) echo "<option value='$k' ".selected($member->governorate, $k, false).">$v</option>"; ?></select></div>
+
+                    <div class="sm-form-group"><label class="sm-label">محافظة السكن:</label><select name="residence_governorate" class="sm-select"><?php foreach ($govs as $k => $v) echo "<option value='$k' ".selected($member->residence_governorate, $k, false).">$v</option>"; ?></select></div>
+                    <div class="sm-form-group"><label class="sm-label">المدينة / المركز:</label><input name="residence_city" type="text" class="sm-input" value="<?php echo esc_attr($member->residence_city); ?>"></div>
+                    <div class="sm-form-group" style="grid-column: span 2;"><label class="sm-label">العنوان (الشارع / القرية):</label><input name="residence_street" type="text" class="sm-input" value="<?php echo esc_attr($member->residence_street); ?>"></div>
+
+                    <div class="sm-form-group"><label class="sm-label">محافظة الفرع:</label><select name="governorate" class="sm-select"><?php foreach ($govs as $k => $v) echo "<option value='$k' ".selected($member->governorate, $k, false).">$v</option>"; ?></select></div>
                     <div class="sm-form-group"><label class="sm-label">رقم الهاتف:</label><input type="text" name="phone" class="sm-input" value="<?php echo esc_attr($member->phone); ?>"></div>
                     <div class="sm-form-group"><label class="sm-label">البريد الإلكتروني:</label><input type="email" name="email" class="sm-input" value="<?php echo esc_attr($member->email); ?>"></div>
                     <div class="sm-form-group" style="grid-column: span 2;"><label class="sm-label">سبب التحديث / ملاحظات إضافية:</label><textarea name="notes" class="sm-input" rows="2"></textarea></div>
@@ -383,12 +433,18 @@ window.editSmMember = function(s) {
     document.getElementById('edit_name').value = s.name;
     document.getElementById('edit_national_id').value = s.national_id;
     document.getElementById('edit_grade').value = s.professional_grade;
+    document.getElementById('edit_university').value = s.university || '';
+    document.getElementById('edit_faculty').value = s.faculty || '';
+    document.getElementById('edit_department').value = s.department || '';
+    document.getElementById('edit_grad_date').value = s.graduation_date || '';
+    document.getElementById('edit_degree').value = s.academic_degree || 'بكالوريوس';
     document.getElementById('edit_spec').value = s.specialization;
+    document.getElementById('edit_res_gov').value = s.residence_governorate || '';
+    document.getElementById('edit_res_city').value = s.residence_city || '';
+    document.getElementById('edit_res_street').value = s.residence_street || '';
     document.getElementById('edit_gov').value = s.governorate;
     document.getElementById('edit_phone').value = s.phone;
     document.getElementById('edit_email').value = s.email;
-    document.getElementById('edit_mem_start').value = s.membership_start_date;
-    document.getElementById('edit_mem_expiry').value = s.membership_expiration_date;
     document.getElementById('edit_notes').value = s.notes || '';
     document.getElementById('edit-member-modal').style.display = 'flex';
 };
