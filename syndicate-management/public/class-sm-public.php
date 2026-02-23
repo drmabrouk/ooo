@@ -122,6 +122,13 @@ class SM_Public {
         add_shortcode('sm_login', array($this, 'shortcode_login'));
         add_shortcode('sm_admin', array($this, 'shortcode_admin_dashboard'));
         add_shortcode('verify', array($this, 'shortcode_verify'));
+
+        // Page Customization Shortcodes
+        add_shortcode('smhome', array($this, 'shortcode_home'));
+        add_shortcode('smabout', array($this, 'shortcode_about'));
+        add_shortcode('smcontact', array($this, 'shortcode_contact'));
+        add_shortcode('smblog', array($this, 'shortcode_blog'));
+
         add_filter('authenticate', array($this, 'custom_authenticate'), 20, 3);
         add_filter('auth_cookie_expiration', array($this, 'custom_auth_cookie_expiration'), 10, 3);
     }
@@ -166,6 +173,127 @@ class SM_Public {
     public function shortcode_verify() {
         ob_start();
         include SM_PLUGIN_DIR . 'templates/public-verification.php';
+        return ob_get_clean();
+    }
+
+    public function shortcode_home() {
+        $syndicate = SM_Settings::get_syndicate_info();
+        $page = SM_DB::get_page_by_shortcode('smhome');
+        ob_start();
+        ?>
+        <div class="sm-public-page sm-home-page" dir="rtl">
+            <div class="sm-hero-section">
+                <?php if ($syndicate['syndicate_logo']): ?>
+                    <img src="<?php echo esc_url($syndicate['syndicate_logo']); ?>" alt="Logo" class="sm-hero-logo">
+                <?php endif; ?>
+                <h1><?php echo esc_html($syndicate['syndicate_name']); ?></h1>
+                <p class="sm-hero-subtitle"><?php echo esc_html($page->instructions ?? 'مرحباً بكم في البوابة الرسمية'); ?></p>
+            </div>
+            <div class="sm-content-container">
+                <div class="sm-info-grid">
+                    <div class="sm-info-card">
+                        <span class="dashicons dashicons-admin-site"></span>
+                        <h4>من نحن</h4>
+                        <p>نعمل على تقديم أفضل الخدمات لأعضاء النقابة وتطوير المنظومة المهنية.</p>
+                    </div>
+                    <div class="sm-info-card">
+                        <span class="dashicons dashicons-awards"></span>
+                        <h4>أهدافنا</h4>
+                        <p>الارتقاء بالمستوى المهني والاجتماعي لكافة الأعضاء المسجلين.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    public function shortcode_about() {
+        $syndicate = SM_Settings::get_syndicate_info();
+        $page = SM_DB::get_page_by_shortcode('smabout');
+        ob_start();
+        ?>
+        <div class="sm-public-page sm-about-page" dir="rtl">
+            <div class="sm-page-header">
+                <h2><?php echo esc_html($page->title ?? 'عن النقابة'); ?></h2>
+            </div>
+            <div class="sm-content-container">
+                <div class="sm-about-content">
+                    <h3><?php echo esc_html($syndicate['syndicate_name']); ?></h3>
+                    <div class="sm-text-block">
+                        <?php echo nl2br(esc_html($syndicate['extra_details'] ?: 'تفاصيل النقابة الرسمية والرؤية المستقبلية للمهنة.')); ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    public function shortcode_contact() {
+        $syndicate = SM_Settings::get_syndicate_info();
+        $page = SM_DB::get_page_by_shortcode('smcontact');
+        ob_start();
+        ?>
+        <div class="sm-public-page sm-contact-page" dir="rtl">
+            <div class="sm-page-header">
+                <h2><?php echo esc_html($page->title ?? 'اتصل بنا'); ?></h2>
+            </div>
+            <div class="sm-content-container">
+                <div class="sm-contact-grid">
+                    <div class="sm-contact-info">
+                        <h3>بيانات التواصل</h3>
+                        <p><span class="dashicons dashicons-location"></span> <?php echo esc_html($syndicate['address']); ?></p>
+                        <p><span class="dashicons dashicons-phone"></span> <?php echo esc_html($syndicate['phone']); ?></p>
+                        <p><span class="dashicons dashicons-email"></span> <?php echo esc_html($syndicate['email']); ?></p>
+                    </div>
+                    <div class="sm-contact-form-wrapper">
+                        <form class="sm-public-form">
+                            <div class="sm-form-group"><input type="text" placeholder="الاسم الكامل" class="sm-input"></div>
+                            <div class="sm-form-group"><input type="email" placeholder="البريد الإلكتروني" class="sm-input"></div>
+                            <div class="sm-form-group"><textarea placeholder="رسالتك" class="sm-textarea" rows="5"></textarea></div>
+                            <button type="button" class="sm-btn" onclick="alert('شكراً لتواصلك معنا، تم استلام رسالتك.')">إرسال الرسالة</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    public function shortcode_blog() {
+        $articles = SM_DB::get_articles(12);
+        $page = SM_DB::get_page_by_shortcode('smblog');
+        ob_start();
+        ?>
+        <div class="sm-public-page sm-blog-page" dir="rtl">
+            <div class="sm-page-header">
+                <h2><?php echo esc_html($page->title ?? 'أخبار ومقالات'); ?></h2>
+            </div>
+            <div class="sm-content-container">
+                <?php if (empty($articles)): ?>
+                    <p style="text-align:center; padding:50px; color:#718096;">لا توجد مقالات منشورة حالياً.</p>
+                <?php else: ?>
+                    <div class="sm-blog-grid">
+                        <?php foreach($articles as $a): ?>
+                            <div class="sm-blog-card">
+                                <?php if($a->image_url): ?>
+                                    <div class="sm-blog-image" style="background-image: url('<?php echo esc_url($a->image_url); ?>');"></div>
+                                <?php endif; ?>
+                                <div class="sm-blog-content">
+                                    <span class="sm-blog-date"><?php echo date('Y-m-d', strtotime($a->created_at)); ?></span>
+                                    <h4><?php echo esc_html($a->title); ?></h4>
+                                    <p><?php echo mb_strimwidth(strip_tags($a->content), 0, 120, '...'); ?></p>
+                                    <a href="#" class="sm-read-more">اقرأ المزيد ←</a>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
+        <?php
         return ob_get_clean();
     }
 
@@ -1953,6 +2081,44 @@ class SM_Public {
         $id = SM_DB::save_pub_template($_POST);
         if ($id) wp_send_json_success($id);
         else wp_send_json_error('Failed to save template');
+    }
+
+    public function ajax_save_page_settings() {
+        if (!current_user_can('sm_manage_system')) wp_send_json_error('Unauthorized');
+        check_ajax_referer('sm_admin_action', 'nonce');
+
+        $id = intval($_POST['id']);
+        $data = [
+            'title' => sanitize_text_field($_POST['title']),
+            'instructions' => sanitize_textarea_field($_POST['instructions']),
+            'settings' => stripslashes($_POST['settings'] ?? '{}')
+        ];
+
+        if (SM_DB::update_page($id, $data)) wp_send_json_success();
+        else wp_send_json_error('Failed to update page');
+    }
+
+    public function ajax_add_article() {
+        if (!current_user_can('sm_manage_system')) wp_send_json_error('Unauthorized');
+        check_ajax_referer('sm_admin_action', 'nonce');
+
+        $data = [
+            'title' => sanitize_text_field($_POST['title']),
+            'content' => wp_kses_post($_POST['content']),
+            'image_url' => esc_url_raw($_POST['image_url'] ?? ''),
+            'status' => 'publish'
+        ];
+
+        if (SM_DB::add_article($data)) wp_send_json_success();
+        else wp_send_json_error('Failed to add article');
+    }
+
+    public function ajax_delete_article() {
+        if (!current_user_can('sm_manage_system')) wp_send_json_error('Unauthorized');
+        check_ajax_referer('sm_admin_action', 'nonce');
+
+        if (SM_DB::delete_article(intval($_POST['id']))) wp_send_json_success();
+        else wp_send_json_error('Failed to delete article');
     }
 
     public function ajax_generate_pub_doc() {
