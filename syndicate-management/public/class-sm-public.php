@@ -2200,11 +2200,12 @@ class SM_Public {
             'content' => wp_kses_post($_POST['content']),
             'options' => [
                 'doc_type' => sanitize_text_field($_POST['doc_type'] ?? 'report'),
+                'fees' => floatval($_POST['fees'] ?? 0),
                 'header' => !empty($_POST['header']),
                 'footer' => !empty($_POST['footer']),
                 'qr' => !empty($_POST['qr']),
                 'barcode' => !empty($_POST['barcode']),
-                'frame' => !empty($_POST['frame'])
+                'frame_type' => sanitize_text_field($_POST['frame_type'] ?? 'none')
             ]
         ];
 
@@ -2252,6 +2253,7 @@ class SM_Public {
         $syndicate['syndicate_officer_name'] = sanitize_text_field($_POST['syndicate_officer_name']);
         $syndicate['phone'] = sanitize_text_field($_POST['phone']);
         $syndicate['email'] = sanitize_email($_POST['email']);
+        $syndicate['website_url'] = esc_url_raw($_POST['website_url'] ?? '');
         $syndicate['address'] = sanitize_text_field($_POST['address']);
         $syndicate['syndicate_logo'] = esc_url_raw($_POST['syndicate_logo']);
         $syndicate['authority_logo'] = esc_url_raw($_POST['authority_logo']);

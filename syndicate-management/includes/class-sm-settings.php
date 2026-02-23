@@ -73,6 +73,7 @@ class SM_Settings {
             'address' => 'الرياض، المملكة العربية السعودية',
             'email' => 'info@syndicate.edu',
             'phone' => '0123456789',
+            'website_url' => '',
             'map_link' => '',
             'extra_details' => ''
         );

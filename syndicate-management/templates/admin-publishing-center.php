@@ -6,7 +6,7 @@ $syndicate = SM_Settings::get_syndicate_info();
 ?>
 
 <!-- Include Google Fonts for Publishing -->
-<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@400;700&family=Rubik:wght@400;700;900&family=Lateef&family=Aref+Ruqaa&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@400;700&family=Rubik:wght@400;700;900&family=Lateef&family=Aref+Ruqaa&family=Libre+Barcode+39&display=swap" rel="stylesheet">
 <!-- HTML2Canvas for Image Export -->
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
@@ -49,6 +49,10 @@ $syndicate = SM_Settings::get_syndicate_info();
                             <option value="statement">إفادة رسمية</option>
                             <option value="certificate">شهادة معتمدة</option>
                         </select>
+                    </div>
+                    <div>
+                        <label class="sm-label" style="font-weight: 800; color: #111F35;">الرسوم (اختياري):</label>
+                        <input type="number" id="pub_doc_fees" class="sm-input" placeholder="0.00" style="border-width: 2px; height: 48px;">
                     </div>
                 </div>
 
@@ -104,8 +108,8 @@ $syndicate = SM_Settings::get_syndicate_info();
                 <div style="margin-top: 30px; display: flex; justify-content: space-between; align-items: center;">
                     <div style="color: #718096; font-size: 12px;">* سيتم دمج بيانات الهوية الرسمية آلياً عند التصدير.</div>
                     <div style="display: flex; gap: 15px;">
-                        <button onclick="smGenerateDocument('pdf')" class="sm-btn" style="width:auto; background: #111F35; padding: 0 35px;"><span class="dashicons dashicons-pdf"></span> توليد وحفظ PDF</button>
-                        <button onclick="smGenerateDocument('image')" class="sm-btn" style="width:auto; background: #27ae60; padding: 0 35px;"><span class="dashicons dashicons-format-image"></span> تصدير صورة (HQ)</button>
+                        <button onclick="smGenerateDocument('pdf')" class="sm-btn pub-action-btn" style="width:auto; background: #111F35; padding: 0 35px; border-radius: 10px;"><span class="dashicons dashicons-pdf"></span> توليد وحفظ PDF</button>
+                        <button onclick="smGenerateDocument('image')" class="sm-btn pub-action-btn" style="width:auto; background: #27ae60; padding: 0 35px; border-radius: 10px;"><span class="dashicons dashicons-format-image"></span> تصدير صورة (HQ)</button>
                     </div>
                 </div>
             </div>
@@ -121,7 +125,15 @@ $syndicate = SM_Settings::get_syndicate_info();
                         <label class="option-check"><input type="checkbox" id="pub_include_footer" checked> التذييل والبيانات الرسمية</label>
                         <label class="option-check"><input type="checkbox" id="pub_include_qr" checked> رمز الاستجابة السريع (QR)</label>
                         <label class="option-check"><input type="checkbox" id="pub_include_barcode"> الباركود التسلسلي (Barcode)</label>
-                        <label class="option-check"><input type="checkbox" id="pub_include_frame"> إطار تجميلي (للفريم)</label>
+                        <div style="margin-top: 5px;">
+                            <label class="sm-label" style="font-size: 13px;">نمط الإطار:</label>
+                            <select id="pub_frame_type" class="sm-select" style="height: 35px; font-size: 12px;">
+                                <option value="none">بدون إطار</option>
+                                <option value="simple">إطار بسيط</option>
+                                <option value="double">إطار مزدوج</option>
+                                <option value="ornate">إطار مزخرف</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
@@ -138,14 +150,24 @@ $syndicate = SM_Settings::get_syndicate_info();
                     </div>
                 </div>
 
-                <!-- HELP CARD -->
-                <div class="sm-sidebar-card" style="background: #fff8f1; border-color: #ffeace;">
-                    <h4 class="card-title" style="color: #9c4221;"><span class="dashicons dashicons-info"></span> تعليمات هامة</h4>
-                    <ul style="margin: 0; padding: 0 15px; font-size: 12px; color: #9c4221; line-height: 1.6;">
-                        <li>يتم التعامل مع الصفحات آلياً عند التجاوز.</li>
-                        <li>التنسيق يظهر بشكل نهائي في ملف PDF.</li>
-                        <li>الباركود يسهل عملية الأرشفة الرقمية.</li>
-                    </ul>
+                <!-- INSTRUCTIONS CARD -->
+                <div class="sm-sidebar-card" style="background: #f0f7ff; border-color: #bee3f8;">
+                    <h4 class="card-title" style="color: #2b6cb0; border-bottom-color: #bee3f8;"><span class="dashicons dashicons-info"></span> دليل المركز</h4>
+                    <div style="font-size: 12px; color: #2c5282; line-height: 1.7;">
+                        <p style="margin-top:0;"><strong>أنواع المستندات:</strong></p>
+                        <ul style="padding-right: 15px; margin-bottom: 15px;">
+                            <li><strong>التقارير:</strong> تصميم منظم للمعاينة الفنية.</li>
+                            <li><strong>الإفادات:</strong> تخطيط رسمي للمخاطبات.</li>
+                            <li><strong>الشهادات:</strong> مظهر احترافي للاجتياز.</li>
+                        </ul>
+                        <p><strong>المميزات المتقدمة:</strong></p>
+                        <ul style="padding-right: 15px;">
+                            <li>التذييل التلقائي بالبيانات الرسمية.</li>
+                            <li>توليد QR للتحقق السريع.</li>
+                            <li>التعامل الذكي مع تعدد الصفحات.</li>
+                            <li>تصدير الصور بجودة عالية (HQ).</li>
+                        </ul>
+                    </div>
                 </div>
 
             </div>
@@ -185,6 +207,11 @@ $syndicate = SM_Settings::get_syndicate_info();
                     <input type="email" id="sys_email" class="sm-input" value="<?php echo esc_attr($syndicate['email']); ?>">
                 </div>
 
+                <div class="sm-form-group">
+                    <label class="sm-label">رابط الموقع الإلكتروني:</label>
+                    <input type="url" id="sys_website" class="sm-input" value="<?php echo esc_attr($syndicate['website_url'] ?? ''); ?>" placeholder="https://example.com">
+                </div>
+
                 <div class="sm-form-group" style="grid-column: span 2;">
                     <label class="sm-label">العنوان الكامل:</label>
                     <input type="text" id="sys_address" class="sm-input" value="<?php echo esc_attr($syndicate['address']); ?>">
@@ -211,7 +238,7 @@ $syndicate = SM_Settings::get_syndicate_info();
             </div>
 
             <div style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 25px; text-align: left;">
-                <button onclick="smSaveIdentitySettings()" class="sm-btn" style="width: auto; padding: 0 40px; background: #27ae60;">حفظ إعدادات الهوية</button>
+                <button onclick="smSaveIdentitySettings()" class="sm-btn pub-action-btn" style="width: auto; padding: 0 40px; background: #27ae60; border-radius: 10px; font-weight: bold;">حفظ إعدادات الهوية</button>
             </div>
         </div>
     </div>
@@ -277,6 +304,17 @@ $syndicate = SM_Settings::get_syndicate_info();
 .sm-sidebar-card { background: #fff; padding: 25px; border-radius: 15px; border: 1px solid #e2e8f0; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
 .card-title { margin: 0 0 20px 0; font-size: 1.1em; font-weight: 800; color: #111F35; border-bottom: 1px solid #f0f4f8; padding-bottom: 12px; display: flex; align-items: center; gap: 10px; }
 
+.pub-action-btn {
+    transition: all 0.3s ease !important;
+    transform: translateY(0);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+.pub-action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+    opacity: 0.9;
+}
+
 .editor-tool-btn {
     width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
     background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer; color: #4a5568;
@@ -340,11 +378,12 @@ async function smGenerateDocument(format) {
     fd.append('content', content);
     fd.append('format', format);
     fd.append('doc_type', docType);
+    fd.append('fees', document.getElementById('pub_doc_fees').value);
     fd.append('header', document.getElementById('pub_include_header').checked ? 1 : 0);
     fd.append('footer', document.getElementById('pub_include_footer').checked ? 1 : 0);
     fd.append('qr', document.getElementById('pub_include_qr').checked ? 1 : 0);
     fd.append('barcode', document.getElementById('pub_include_barcode').checked ? 1 : 0);
-    fd.append('frame', document.getElementById('pub_include_frame').checked ? 1 : 0);
+    fd.append('frame_type', document.getElementById('pub_frame_type').value);
     fd.append('nonce', '<?php echo wp_create_nonce("sm_pub_action"); ?>');
 
     if (format === 'image') {
@@ -395,6 +434,11 @@ function smUploadIdentityImg(type) {
 }
 
 function smSaveIdentitySettings() {
+    const btn = event.currentTarget;
+    const originalHtml = btn.innerHTML;
+    btn.innerHTML = '<span class="dashicons dashicons-update spin"></span> جاري الحفظ...';
+    btn.disabled = true;
+
     const fd = new FormData();
     fd.append('action', 'sm_save_pub_identity');
     fd.append('syndicate_name', document.getElementById('sys_syndicate_name').value);
@@ -402,6 +446,7 @@ function smSaveIdentitySettings() {
     fd.append('syndicate_officer_name', document.getElementById('sys_officer_name').value);
     fd.append('phone', document.getElementById('sys_phone').value);
     fd.append('email', document.getElementById('sys_email').value);
+    fd.append('website_url', document.getElementById('sys_website').value);
     fd.append('address', document.getElementById('sys_address').value);
     fd.append('syndicate_logo', document.getElementById('sys_syndicate_logo').value);
     fd.append('authority_logo', document.getElementById('sys_authority_logo').value);
@@ -412,9 +457,12 @@ function smSaveIdentitySettings() {
     .then(res => {
         if (res.success) {
             smShowNotification('تم حفظ إعدادات الهوية بنجاح');
+            btn.innerHTML = '<span class="dashicons dashicons-yes"></span> تم الحفظ';
             setTimeout(() => location.reload(), 1000);
         } else {
             smShowNotification(res.data, true);
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
         }
     });
 }
