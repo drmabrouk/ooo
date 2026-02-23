@@ -26,6 +26,9 @@ $all_requests = $is_official ? SM_DB::get_service_requests() : [];
     <div class="sm-tabs-wrapper" style="display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 2px solid #eee; padding-bottom: 10px;">
         <button class="sm-tab-btn sm-active" onclick="smOpenInternalTab('available-services', this)">الخدمات المتاحة</button>
         <button class="sm-tab-btn" onclick="smOpenInternalTab('requests-history', this)"><?php echo $is_official ? 'طلبات الأعضاء' : 'طلباتي السابقة'; ?></button>
+        <?php if ($is_official): ?>
+            <button class="sm-tab-btn" onclick="smOpenInternalTab('deleted-services', this)">الخدمات المحذوفة</button>
+        <?php endif; ?>
     </div>
 
     <!-- TAB: Available Services -->
@@ -77,6 +80,46 @@ $all_requests = $is_official ? SM_DB::get_service_requests() : [];
             <?php endif; ?>
         </div>
     </div>
+
+    <!-- TAB: Deleted Services (Trash) -->
+    <?php if ($is_official):
+        global $wpdb;
+        $deleted_logs = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}sm_logs WHERE action = 'حذف خدمة رقمية' ORDER BY created_at DESC LIMIT 20");
+    ?>
+    <div id="deleted-services" class="sm-internal-tab" style="display: none;">
+        <div class="sm-table-container">
+            <table class="sm-table">
+                <thead>
+                    <tr>
+                        <th>الخدمة</th>
+                        <th>تاريخ الحذف</th>
+                        <th>بواسطة</th>
+                        <th>إجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if (empty($deleted_logs)): ?>
+                        <tr><td colspan="4" style="text-align: center; padding: 40px;">لا توجد خدمات محذوفة مؤخراً.</td></tr>
+                    <?php else: foreach ($deleted_logs as $log):
+                        $details = json_decode(str_replace('ROLLBACK_DATA:', '', $log->details), true);
+                        if (!$details || !isset($details['data'])) continue;
+                        $s_data = $details['data'];
+                        $user_info = get_userdata($log->user_id);
+                    ?>
+                        <tr>
+                            <td><strong><?php echo esc_html($s_data['name']); ?></strong></td>
+                            <td><?php echo $log->created_at; ?></td>
+                            <td><?php echo $user_info ? $user_info->display_name : 'نظام'; ?></td>
+                            <td>
+                                <button onclick="smRollbackLog(<?php echo $log->id; ?>)" class="sm-btn" style="width: auto; padding: 5px 15px; background: #38a169;">استعادة</button>
+                            </td>
+                        </tr>
+                    <?php endforeach; endif; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <?php endif; ?>
 
     <!-- TAB: Requests History -->
     <div id="requests-history" class="sm-internal-tab" style="display: none;">

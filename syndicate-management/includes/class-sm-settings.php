@@ -68,6 +68,8 @@ class SM_Settings {
             'syndicate_name' => 'نقابتي النموذجية',
             'syndicate_officer_name' => 'أحمد علي',
             'syndicate_logo' => '',
+            'authority_name' => '',
+            'authority_logo' => '',
             'address' => 'الرياض، المملكة العربية السعودية',
             'email' => 'info@syndicate.edu',
             'phone' => '0123456789',

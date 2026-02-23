@@ -979,6 +979,16 @@ class SM_DB {
             $params[] = sanitize_text_field($args['category']);
         }
 
+        if (!empty($args['priority'])) {
+            $where .= " AND t.priority = %s";
+            $params[] = sanitize_text_field($args['priority']);
+        }
+
+        if (!empty($args['province'])) {
+            $where .= " AND t.province = %s";
+            $params[] = sanitize_text_field($args['province']);
+        }
+
         if (!empty($args['search'])) {
             $s = '%' . $wpdb->esc_like($args['search']) . '%';
             $where .= " AND (t.subject LIKE %s OR m.name LIKE %s)";
@@ -1024,5 +1034,48 @@ class SM_DB {
     public static function update_ticket_status($id, $status) {
         global $wpdb;
         return $wpdb->update("{$wpdb->prefix}sm_tickets", array('status' => $status), array('id' => $id));
+    }
+
+    // Page Customization Methods
+    public static function get_pages() {
+        global $wpdb;
+        return $wpdb->get_results("SELECT * FROM {$wpdb->prefix}sm_pages ORDER BY id ASC");
+    }
+
+    public static function get_page_by_shortcode($shortcode) {
+        global $wpdb;
+        return $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}sm_pages WHERE shortcode = %s", $shortcode));
+    }
+
+    public static function update_page($id, $data) {
+        global $wpdb;
+        return $wpdb->update("{$wpdb->prefix}sm_pages", [
+            'title' => sanitize_text_field($data['title']),
+            'instructions' => sanitize_textarea_field($data['instructions']),
+            'settings' => $data['settings']
+        ], ['id' => intval($id)]);
+    }
+
+    // Article Management Methods
+    public static function add_article($data) {
+        global $wpdb;
+        return $wpdb->insert("{$wpdb->prefix}sm_articles", [
+            'title' => sanitize_text_field($data['title']),
+            'content' => wp_kses_post($data['content']),
+            'image_url' => esc_url_raw($data['image_url'] ?? ''),
+            'author_id' => get_current_user_id(),
+            'status' => $data['status'] ?? 'publish',
+            'created_at' => current_time('mysql')
+        ]);
+    }
+
+    public static function get_articles($limit = 10) {
+        global $wpdb;
+        return $wpdb->get_results($wpdb->prepare("SELECT * FROM {$wpdb->prefix}sm_articles WHERE status = 'publish' ORDER BY created_at DESC LIMIT %d", $limit));
+    }
+
+    public static function delete_article($id) {
+        global $wpdb;
+        return $wpdb->delete("{$wpdb->prefix}sm_articles", ['id' => intval($id)]);
     }
 }

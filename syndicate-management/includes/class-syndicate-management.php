@@ -111,6 +111,9 @@ class Syndicate_Management {
         $this->loader->add_action('wp_ajax_sm_print_pub_doc', $plugin_public, 'ajax_print_pub_doc');
         $this->loader->add_action('wp_ajax_sm_save_pub_identity', $plugin_public, 'ajax_save_pub_identity');
         $this->loader->add_action('wp_ajax_sm_save_pub_template', $plugin_public, 'ajax_save_pub_template');
+        $this->loader->add_action('wp_ajax_sm_save_page_settings', $plugin_public, 'ajax_save_page_settings');
+        $this->loader->add_action('wp_ajax_sm_add_article', $plugin_public, 'ajax_add_article');
+        $this->loader->add_action('wp_ajax_sm_delete_article', $plugin_public, 'ajax_delete_article');
         $this->loader->add_action('sm_daily_maintenance', 'SM_DB', 'delete_expired_messages');
         $this->loader->add_action('sm_daily_maintenance', 'SM_Notifications', 'run_daily_checks');
     }
