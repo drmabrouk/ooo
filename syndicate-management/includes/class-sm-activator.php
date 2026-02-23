@@ -5,10 +5,13 @@ class SM_Activator {
     public static function activate() {
         global $wpdb;
         $charset_collate = $wpdb->get_charset_collate();
+        $installed_ver = get_option('sm_db_version');
 
         // Migration: Rename old tables if they exist
-        self::migrate_tables();
-        self::migrate_settings();
+        if (version_compare($installed_ver, '97.2.0', '<')) {
+            self::migrate_tables();
+            self::migrate_settings();
+        }
 
         $sql = "";
 
@@ -374,8 +377,37 @@ class SM_Activator {
             PRIMARY KEY  (id)
         ) $charset_collate;\n";
 
+        // Alerts Table
+        $table_name = $wpdb->prefix . 'sm_alerts';
+        $sql .= "CREATE TABLE $table_name (
+            id mediumint(9) NOT NULL AUTO_INCREMENT,
+            title varchar(255) NOT NULL,
+            message text NOT NULL,
+            severity enum('info', 'warning', 'critical') DEFAULT 'info',
+            must_acknowledge tinyint(1) DEFAULT 0,
+            status enum('active', 'inactive') DEFAULT 'active',
+            created_at datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
+            updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id)
+        ) $charset_collate;\n";
+
+        // Alert Views Table
+        $table_name = $wpdb->prefix . 'sm_alert_views';
+        $sql .= "CREATE TABLE $table_name (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            alert_id mediumint(9) NOT NULL,
+            user_id bigint(20) NOT NULL,
+            acknowledged tinyint(1) DEFAULT 0,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
+            PRIMARY KEY  (id),
+            KEY alert_id (alert_id),
+            KEY user_id (user_id)
+        ) $charset_collate;\n";
+
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';
         dbDelta($sql);
+
+        update_option('sm_db_version', SM_VERSION);
 
         self::setup_roles();
         self::seed_notification_templates();

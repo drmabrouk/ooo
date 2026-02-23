@@ -36,6 +36,7 @@ class Syndicate_Management {
         $this->loader->add_filter('show_admin_bar', $plugin_public, 'hide_admin_bar_for_non_admins');
         $this->loader->add_action('admin_init', $plugin_public, 'restrict_admin_access');
         $this->loader->add_action('wp_enqueue_scripts', $plugin_public, 'enqueue_styles');
+        $this->loader->add_action('wp_footer', $plugin_public, 'inject_global_alerts');
         $this->loader->add_action('init', $plugin_public, 'register_shortcodes');
         $this->loader->add_action('template_redirect', $plugin_public, 'handle_form_submission');
         $this->loader->add_action('wp_login_failed', $plugin_public, 'login_failed');
@@ -118,6 +119,9 @@ class Syndicate_Management {
         $this->loader->add_action('wp_ajax_sm_save_page_settings', $plugin_public, 'ajax_save_page_settings');
         $this->loader->add_action('wp_ajax_sm_add_article', $plugin_public, 'ajax_add_article');
         $this->loader->add_action('wp_ajax_sm_delete_article', $plugin_public, 'ajax_delete_article');
+        $this->loader->add_action('wp_ajax_sm_save_alert', $plugin_public, 'ajax_save_alert');
+        $this->loader->add_action('wp_ajax_sm_delete_alert', $plugin_public, 'ajax_delete_alert');
+        $this->loader->add_action('wp_ajax_sm_acknowledge_alert', $plugin_public, 'ajax_acknowledge_alert');
         $this->loader->add_action('sm_daily_maintenance', 'SM_DB', 'delete_expired_messages');
         $this->loader->add_action('sm_daily_maintenance', 'SM_Notifications', 'run_daily_checks');
     }

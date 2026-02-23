@@ -609,6 +609,7 @@ $greeting = ($hour >= 5 && $hour < 12) ? 'صباح الخير' : 'مساء ال�
                         <a href="<?php echo add_query_arg('sm_tab', 'advanced-settings'); ?>" class="sm-sidebar-link" style="color: #c53030 !important;"><span class="dashicons dashicons-shield-alt"></span> الإعدادات المتقدمة</a>
                         <ul class="sm-sidebar-dropdown" style="display: <?php echo $active_tab == 'advanced-settings' ? 'block' : 'none'; ?>;">
                             <li><a href="<?php echo add_query_arg('sm_tab', 'advanced-settings'); ?>&sub=staff" class="<?php echo (!isset($_GET['sub']) || $_GET['sub'] == 'staff') ? 'sm-sub-active' : ''; ?>"><span class="dashicons dashicons-admin-users"></span> إدارة مستخدمي النظام</a></li>
+                            <li><a href="<?php echo add_query_arg('sm_tab', 'advanced-settings'); ?>&sub=alerts" class="<?php echo ($_GET['sub'] ?? '') == 'alerts' ? 'sm-sub-active' : ''; ?>"><span class="dashicons dashicons-megaphone"></span> تنبيهات النظام (System Alerts)</a></li>
                             <li><a href="<?php echo add_query_arg('sm_tab', 'advanced-settings'); ?>&sub=backup" class="<?php echo ($_GET['sub'] ?? '') == 'backup' ? 'sm-sub-active' : ''; ?>"><span class="dashicons dashicons-database-export"></span> مركز النسخ الاحتياطي</a></li>
                             <li><a href="<?php echo add_query_arg('sm_tab', 'advanced-settings'); ?>&sub=logs" class="<?php echo ($_GET['sub'] ?? '') == 'logs' ? 'sm-sub-active' : ''; ?>"><span class="dashicons dashicons-list-view"></span> سجل النشاطات (Activity Log)</a></li>
                         </ul>
@@ -705,6 +706,7 @@ $greeting = ($hour >= 5 && $hour < 12) ? 'صباح الخير' : 'مساء ال�
                         $sub = $_GET['sub'] ?? 'staff';
                         ?>
                         <div class="sm-tabs-wrapper" style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #eee; overflow-x: auto; white-space: nowrap; padding-bottom: 10px;">
+                            <button class="sm-tab-btn <?php echo ($sub == 'alerts') ? 'sm-active' : ''; ?>" onclick="smOpenInternalTab('system-alerts-settings', this)">تنبيهات النظام</button>
                             <button class="sm-tab-btn <?php echo ($sub == 'staff') ? 'sm-active' : ''; ?>" onclick="smOpenInternalTab('system-users-settings', this)">إدارة مستخدمي النظام</button>
                             <button class="sm-tab-btn <?php echo ($sub == 'backup') ? 'sm-active' : ''; ?>" onclick="smOpenInternalTab('backup-settings', this)">مركز النسخ الاحتياطي</button>
                             <button class="sm-tab-btn <?php echo ($sub == 'logs') ? 'sm-active' : ''; ?>" onclick="smOpenInternalTab('activity-logs', this)">سجل النشاطات</button>
@@ -1111,6 +1113,41 @@ $greeting = ($hour >= 5 && $hour < 12) ? 'صباح الخير' : 'مساء ال�
             ?>
 
         </div>
+    </div>
+</div>
+
+<!-- Alert Management Modal -->
+<div id="sm-alert-modal" class="sm-modal-overlay">
+    <div class="sm-modal-content" style="max-width: 600px;">
+        <div class="sm-modal-header"><h3><span id="sm-alert-modal-title">إنشاء تنبيه جديد</span></h3><button class="sm-modal-close" onclick="document.getElementById('sm-alert-modal').style.display='none'">&times;</button></div>
+        <form id="sm-alert-form" style="padding: 20px;">
+            <input type="hidden" name="id" id="edit-alert-id">
+            <div class="sm-form-group"><label class="sm-label">عنوان التنبيه:</label><input type="text" name="title" class="sm-input" required></div>
+            <div class="sm-form-group"><label class="sm-label">نص الرسالة:</label><textarea name="message" class="sm-textarea" rows="4" required></textarea></div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+                <div class="sm-form-group">
+                    <label class="sm-label">مستوى الخطورة:</label>
+                    <select name="severity" class="sm-select">
+                        <option value="info">عادي (White)</option>
+                        <option value="warning">تحذير (Orange)</option>
+                        <option value="critical">هام (Red)</option>
+                    </select>
+                </div>
+                <div class="sm-form-group">
+                    <label class="sm-label">الحالة:</label>
+                    <select name="status" class="sm-select">
+                        <option value="active">نشط</option>
+                        <option value="inactive">معطل</option>
+                    </select>
+                </div>
+            </div>
+            <div class="sm-form-group">
+                <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
+                    <input type="checkbox" name="must_acknowledge" value="1"> يتطلب إقرار بالاستلام من العضو قبل الإغلاق
+                </label>
+            </div>
+            <button type="submit" class="sm-btn" style="width: 100%; margin-top:10px;">حفظ ونشر التنبيه</button>
+        </form>
     </div>
 </div>
 

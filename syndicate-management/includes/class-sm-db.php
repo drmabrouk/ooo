@@ -1178,4 +1178,68 @@ class SM_DB {
         }
         return $wpdb->get_results($query . " ORDER BY created_at DESC");
     }
+
+    // Global Alert System Methods
+    public static function save_alert($data) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'sm_alerts';
+        $insert_data = [
+            'title' => sanitize_text_field($data['title']),
+            'message' => wp_kses_post($data['message']),
+            'severity' => sanitize_text_field($data['severity']),
+            'must_acknowledge' => !empty($data['must_acknowledge']) ? 1 : 0,
+            'status' => sanitize_text_field($data['status'] ?? 'active')
+        ];
+
+        if (!empty($data['id'])) {
+            return $wpdb->update($table, $insert_data, ['id' => intval($data['id'])]);
+        }
+        return $wpdb->insert($table, $insert_data);
+    }
+
+    public static function get_alerts($args = []) {
+        global $wpdb;
+        $where = "1=1";
+        if (!empty($args['status'])) {
+            $where .= $wpdb->prepare(" AND status = %s", $args['status']);
+        }
+        return $wpdb->get_results("SELECT * FROM {$wpdb->prefix}sm_alerts WHERE $where ORDER BY created_at DESC");
+    }
+
+    public static function get_alert($id) {
+        global $wpdb;
+        return $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}sm_alerts WHERE id = %d", $id));
+    }
+
+    public static function delete_alert($id) {
+        global $wpdb;
+        $wpdb->delete("{$wpdb->prefix}sm_alert_views", ['alert_id' => intval($id)]);
+        return $wpdb->delete("{$wpdb->prefix}sm_alerts", ['id' => intval($id)]);
+    }
+
+    public static function get_active_alerts_for_user($user_id) {
+        global $wpdb;
+        // Fetch active alerts that the user hasn't acknowledged yet (if acknowledgment is required)
+        // or just all active alerts if they haven't seen them.
+        // Actually, requirement says "immediately for logged-in users".
+        // We should track which ones are seen.
+
+        return $wpdb->get_results($wpdb->prepare("
+            SELECT a.*
+            FROM {$wpdb->prefix}sm_alerts a
+            LEFT JOIN {$wpdb->prefix}sm_alert_views v ON a.id = v.alert_id AND v.user_id = %d
+            WHERE a.status = 'active'
+            AND v.id IS NULL
+        ", $user_id));
+    }
+
+    public static function acknowledge_alert($alert_id, $user_id) {
+        global $wpdb;
+        return $wpdb->insert("{$wpdb->prefix}sm_alert_views", [
+            'alert_id' => intval($alert_id),
+            'user_id' => intval($user_id),
+            'acknowledged' => 1,
+            'created_at' => current_time('mysql')
+        ]);
+    }
 }
