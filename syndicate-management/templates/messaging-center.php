@@ -84,7 +84,7 @@ $priorities = array(
     <!-- Main Content -->
     <div class="sm-tickets-main">
         <div id="tickets-list-container">
-            <div id="sm-tickets-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px;">
+            <div id="sm-tickets-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
                 <!-- Loaded via JS -->
             </div>
         </div>

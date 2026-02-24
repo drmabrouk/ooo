@@ -22,6 +22,9 @@ $active_sub_tab = $_GET['sub_tab'] ?? 'documents';
         <a href="<?php echo add_query_arg('sub_tab', 'documents'); ?>" class="sm-tab-btn <?php echo $active_sub_tab == 'documents' ? 'sm-active' : ''; ?>" style="text-decoration:none;">
             <span class="dashicons dashicons-portfolio" style="vertical-align: middle; margin-left: 5px;"></span> مستندات الأعضاء
         </a>
+        <a href="<?php echo add_query_arg('sub_tab', 'issued'); ?>" class="sm-tab-btn <?php echo $active_sub_tab == 'issued' ? 'sm-active' : ''; ?>" style="text-decoration:none;">
+            <span class="dashicons dashicons-media-spreadsheet" style="vertical-align: middle; margin-left: 5px;"></span> المستندات الصادرة
+        </a>
         <a href="<?php echo add_query_arg('sub_tab', 'finance'); ?>" class="sm-tab-btn <?php echo $active_sub_tab == 'finance' ? 'sm-active' : ''; ?>" style="text-decoration:none;">
             <span class="dashicons dashicons-money-alt" style="vertical-align: middle; margin-left: 5px;"></span> العمليات المالية
         </a>
@@ -114,6 +117,68 @@ $active_sub_tab = $_GET['sub_tab'] ?? 'documents';
                 </tbody>
             </table>
         </div>
+    <?php elseif ($active_sub_tab == 'issued'): ?>
+        <?php
+        $generated = SM_DB::get_pub_documents();
+        ?>
+        <div style="background: #fff; padding: 30px; border-radius: 20px; border: 1px solid #e2e8f0;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                <h3 style="margin: 0; color: #111F35;">سجل كافة المستندات الصادرة من النظام</h3>
+                <div style="position: relative;">
+                    <input type="text" id="pub_log_search" placeholder="بحث بالرقم المسلسل أو العنوان..." class="sm-input" style="width: 350px; padding-left: 40px;" oninput="smFilterLogs()">
+                    <span class="dashicons dashicons-search" style="position: absolute; left: 12px; top: 12px; color: #94a3b8;"></span>
+                </div>
+            </div>
+            <div class="sm-table-container">
+                <table class="sm-table" id="pub-logs-table">
+                    <thead>
+                        <tr>
+                            <th>الرقم المسلسل</th>
+                            <th>عنوان المستند</th>
+                            <th>التصميم</th>
+                            <th>تاريخ الإصدار</th>
+                            <th>المحرر</th>
+                            <th>إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (empty($generated)): ?>
+                            <tr><td colspan="6" style="text-align: center; padding: 50px; color: #94a3b8;">لا توجد مستندات صادرة بعد.</td></tr>
+                        <?php else: foreach($generated as $d):
+                            $options = json_decode($d->options, true);
+                            $type_label = array('report'=>'تقرير', 'statement'=>'إفادة', 'certificate'=>'شهادة')[$options['doc_type'] ?? 'report'] ?? 'أخرى';
+                        ?>
+                            <tr>
+                                <td style="font-family: 'Rubik', sans-serif; font-weight: 900; color: #111F35;"><?php echo $d->serial_number; ?></td>
+                                <td style="font-weight: 700;"><?php echo esc_html($d->title); ?></td>
+                                <td><span class="sm-badge sm-badge-low"><?php echo $type_label; ?></span></td>
+                                <td style="font-size: 11px;"><?php echo $d->created_at; ?></td>
+                                <td><?php echo esc_html($d->creator_name); ?></td>
+                                <td>
+                                    <div style="display: flex; gap: 5px;">
+                                        <button onclick="smDownloadGenerated(<?php echo $d->id; ?>, 'pdf')" class="sm-btn" style="width:auto; height:28px; font-size:11px; background:#111F35;">PDF</button>
+                                        <button onclick="smDownloadGenerated(<?php echo $d->id; ?>, 'image')" class="sm-btn sm-btn-outline" style="width:auto; height:28px; font-size:11px;">صورة</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        <?php endforeach; endif; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <script>
+        function smFilterLogs() {
+            const val = document.getElementById('pub_log_search').value.toLowerCase();
+            const rows = document.querySelectorAll('#pub-logs-table tbody tr');
+            rows.forEach(row => {
+                row.style.display = row.innerText.toLowerCase().includes(val) ? '' : 'none';
+            });
+        }
+        function smDownloadGenerated(id, format) {
+            window.open('<?php echo admin_url('admin-ajax.php'); ?>?action=sm_print_pub_doc&id=' + id + '&format=' + format, '_blank');
+        }
+        </script>
+
     <?php else: ?>
         <?php
         $where = "1=1";

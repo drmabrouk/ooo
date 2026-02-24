@@ -23,12 +23,12 @@ $syndicate = SM_Settings::get_syndicate_info();
         <button class="sm-tab-nav-btn sm-active" onclick="smOpenInternalTab('create-document', this)">
             <span class="dashicons dashicons-edit"></span> إنشاء مستند جديد
         </button>
-        <button class="sm-tab-nav-btn" onclick="smOpenInternalTab('document-logs', this)">
-            <span class="dashicons dashicons-media-spreadsheet"></span> سجل المستندات الصادرة
-        </button>
         <button class="sm-tab-nav-btn" onclick="smOpenInternalTab('identity-settings', this)">
             <span class="dashicons dashicons-admin-generic"></span> إعدادات الهوية الرسمية
         </button>
+        <a href="<?php echo add_query_arg(['sm_tab' => 'global-archive', 'sub_tab' => 'issued']); ?>" class="sm-tab-nav-btn" style="text-decoration:none;">
+            <span class="dashicons dashicons-media-spreadsheet"></span> سجل المستندات الصادرة <span class="dashicons dashicons-external" style="font-size:12px;"></span>
+        </a>
     </div>
 
     <!-- TAB: CREATE DOCUMENT -->
@@ -243,54 +243,6 @@ $syndicate = SM_Settings::get_syndicate_info();
         </div>
     </div>
 
-    <!-- TAB: DOCUMENT LOGS -->
-    <div id="document-logs" class="sm-internal-tab" style="display: none;">
-        <div style="background: #fff; padding: 30px; border-radius: 20px; border: 1px solid #e2e8f0;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-                <h3 style="margin: 0; color: #111F35;">سجل المستندات الصادرة</h3>
-                <div style="position: relative;">
-                    <input type="text" id="pub_log_search" placeholder="بحث بالرقم المسلسل أو العنوان..." class="sm-input" style="width: 350px; padding-left: 40px;" oninput="smFilterLogs()">
-                    <span class="dashicons dashicons-search" style="position: absolute; left: 12px; top: 12px; color: #94a3b8;"></span>
-                </div>
-            </div>
-            <div class="sm-table-container">
-                <table class="sm-table" id="pub-logs-table">
-                    <thead>
-                        <tr>
-                            <th>الرقم المسلسل</th>
-                            <th>عنوان المستند</th>
-                            <th>التصميم</th>
-                            <th>تاريخ الإصدار</th>
-                            <th>المحرر</th>
-                            <th>إجراءات</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if (empty($generated)): ?>
-                            <tr><td colspan="6" style="text-align: center; padding: 50px; color: #94a3b8;">لا توجد مستندات صادرة بعد.</td></tr>
-                        <?php else: foreach($generated as $d):
-                            $options = json_decode($d->options, true);
-                            $type_label = array('report'=>'تقرير', 'statement'=>'إفادة', 'certificate'=>'شهادة')[$options['doc_type'] ?? 'report'];
-                        ?>
-                            <tr>
-                                <td style="font-family: 'Rubik', sans-serif; font-weight: 900; color: #111F35;"><?php echo $d->serial_number; ?></td>
-                                <td style="font-weight: 700;"><?php echo esc_html($d->title); ?></td>
-                                <td><span class="sm-badge sm-badge-low"><?php echo $type_label; ?></span></td>
-                                <td style="font-size: 11px;"><?php echo $d->created_at; ?></td>
-                                <td><?php echo esc_html($d->creator_name); ?></td>
-                                <td>
-                                    <div style="display: flex; gap: 5px;">
-                                        <button onclick="smDownloadGenerated(<?php echo $d->id; ?>, 'pdf')" class="sm-btn sm-btn-outline" style="width:auto; height:30px; font-size:11px;">PDF</button>
-                                        <button onclick="smDownloadGenerated(<?php echo $d->id; ?>, 'image')" class="sm-btn sm-btn-outline" style="width:auto; height:30px; font-size:11px;">صورة</button>
-                                    </div>
-                                </td>
-                            </tr>
-                        <?php endforeach; endif; ?>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
 </div>
 
 <style>

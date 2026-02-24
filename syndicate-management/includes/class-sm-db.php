@@ -1034,7 +1034,7 @@ class SM_DB {
     public static function get_ticket($id) {
         global $wpdb;
         return $wpdb->get_row($wpdb->prepare(
-            "SELECT t.*, m.name as member_name, m.province as member_province, m.phone as member_phone
+            "SELECT t.*, m.name as member_name, m.governorate as member_province, m.phone as member_phone
              FROM {$wpdb->prefix}sm_tickets t
              JOIN {$wpdb->prefix}sm_members m ON t.member_id = m.id
              WHERE t.id = %d",

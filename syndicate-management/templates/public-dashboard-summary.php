@@ -129,6 +129,45 @@ function smSubmitSurveyResponse(surveyId, questionsCount) {
         </div>
     </div>
 </div>
+
+<?php
+$top_delayed = SM_Finance::get_top_delayed_members(10);
+$govs = SM_Settings::get_governorates();
+?>
+<div style="background: #fff; padding: 25px; border: 1px solid var(--sm-border-color); border-radius: 12px; box-shadow: var(--sm-shadow);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px;">
+        <h3 style="margin:0; font-size: 1.1em; color: #e53e3e;">⚠️ قائمة الأعضاء الأكثر تأخراً في السداد</h3>
+        <a href="<?php echo add_query_arg('sm_tab', 'finance'); ?>" style="font-size: 12px; color: var(--sm-primary-color); text-decoration: none; font-weight: 700;">عرض سجل المالية الشامل ←</a>
+    </div>
+    <div class="sm-table-container" style="margin: 0; box-shadow: none; border: none;">
+        <table class="sm-table" style="font-size: 13px;">
+            <thead>
+                <tr>
+                    <th>اسم العضو</th>
+                    <th>لجنة المحافظة</th>
+                    <th>المبلغ المستحق</th>
+                    <th>مدة التأخير</th>
+                    <th>إجراء</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if (empty($top_delayed)): ?>
+                    <tr><td colspan="5" style="text-align:center; padding:20px; color:#94a3b8;">لا يوجد أعضاء متأخرون حالياً.</td></tr>
+                <?php else: foreach($top_delayed as $td): ?>
+                    <tr>
+                        <td style="font-weight: 700;"><?php echo esc_html($td['name']); ?></td>
+                        <td><?php echo esc_html($govs[$td['governorate']] ?? $td['governorate']); ?></td>
+                        <td style="color: #e53e3e; font-weight: 800;"><?php echo number_format($td['balance'], 2); ?> ج.م</td>
+                        <td><span class="sm-badge sm-badge-urgent"><?php echo $td['delay_years']; ?> سنة/سنوات</span></td>
+                        <td>
+                            <a href="<?php echo add_query_arg(['sm_tab' => 'member-profile', 'member_id' => $td['id']]); ?>" class="sm-btn sm-btn-outline" style="padding: 4px 10px; font-size: 11px;">الملف المالي</a>
+                        </td>
+                    </tr>
+                <?php endforeach; endif; ?>
+            </tbody>
+        </table>
+    </div>
+</div>
 <?php endif; ?>
 
 

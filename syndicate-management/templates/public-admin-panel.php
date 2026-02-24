@@ -334,6 +334,67 @@
         });
     }
 
+    window.smOpenAddAlertModal = function() {
+        document.getElementById('sm-alert-form').reset();
+        document.getElementById('edit-alert-id').value = '';
+        document.getElementById('sm-alert-modal-title').innerText = 'إنشاء تنبيه نظام جديد';
+        document.getElementById('sm-alert-modal').style.display = 'flex';
+    };
+
+    window.smEditAlert = function(al) {
+        const f = document.getElementById('sm-alert-form');
+        document.getElementById('edit-alert-id').value = al.id;
+        f.title.value = al.title;
+        f.message.value = al.message;
+        f.severity.value = al.severity;
+        f.status.value = al.status;
+        f.must_acknowledge.checked = al.must_acknowledge == 1;
+        document.getElementById('sm-alert-modal-title').innerText = 'تعديل التنبيه';
+        document.getElementById('sm-alert-modal').style.display = 'flex';
+    };
+
+    window.smDeleteAlert = function(id) {
+        if(!confirm('هل أنت متأكد من حذف هذا التنبيه؟')) return;
+        const fd = new FormData();
+        fd.append('action', 'sm_delete_alert');
+        fd.append('id', id);
+        fd.append('nonce', '<?php echo wp_create_nonce("sm_admin_action"); ?>');
+        fetch(ajaxurl, {method: 'POST', body: fd}).then(r=>r.json()).then(res=>{
+            if(res.success) location.reload();
+        });
+    };
+
+    const alertTemplates = {
+        payment: { title: 'تذكير بسداد الرسوم', message: 'نود تذكيركم بضرورة سداد رسوم العضوية المتأخرة لتجنب غرامات التأخير ولضمان استمرار الخدمات.', severity: 'warning', must_acknowledge: 1 },
+        expiry: { title: 'تنبيه: انتهاء صلاحية العضوية', message: 'عضويتكم ستنتهي قريباً، يرجى التوجه لقسم المالية أو السداد إلكترونياً لتجديد العضوية.', severity: 'critical', must_acknowledge: 1 },
+        maintenance: { title: 'إعلان صيانة النظام', message: 'سيتم إيقاف النظام مؤقتاً لأعمال الصيانة الدورية يوم الجمعة القادم من الساعة 2 صباحاً وحتى 6 صباحاً.', severity: 'info', must_acknowledge: 0 },
+        docs: { title: 'تذكير باستكمال الوثائق', message: 'يرجى مراجعة ملفكم الشخصي ورفع الوثائق المطلوبة لاستكمال ملف العضوية الرقمي.', severity: 'info', must_acknowledge: 0 },
+        urgent: { title: 'قرار إداري عاجل', message: 'بناءً على اجتماع مجلس الإدارة الأخير، تقرر البدء في تنفيذ الآلية الجديدة لتوزيع الحوافز المهنية.', severity: 'critical', must_acknowledge: 1 }
+    };
+
+    window.smApplyAlertTemplate = function(type) {
+        const t = alertTemplates[type];
+        if(!t) return;
+        const f = document.getElementById('sm-alert-form');
+        f.title.value = t.title;
+        f.message.value = t.message;
+        f.severity.value = t.severity;
+        f.must_acknowledge.checked = t.must_acknowledge == 1;
+        document.getElementById('sm-alert-modal-title').innerText = 'إنشاء تنبيه من قالب';
+        document.getElementById('sm-alert-modal').style.display = 'flex';
+    };
+
+    document.getElementById('sm-alert-form')?.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const fd = new FormData(this);
+        fd.append('action', 'sm_save_alert');
+        fd.append('nonce', '<?php echo wp_create_nonce("sm_admin_action"); ?>');
+        fetch(ajaxurl, {method: 'POST', body: fd}).then(r=>r.json()).then(res=>{
+            if(res.success) { smShowNotification('تم حفظ التنبيه'); location.reload(); }
+            else alert(res.data);
+        });
+    });
+
 })(window);
 </script>
 
@@ -417,8 +478,8 @@ $greeting = ($hour >= 5 && $hour < 12) ? 'صباح الخير' : 'مساء ال�
                     <?php if ($is_sys_admin || $is_admin): ?>
                         <button onclick="window.location.href='<?php echo add_query_arg('sm_tab', 'global-archive'); ?>&sub_tab=finance'" class="sm-btn" style="background: #e67e22; height: 38px; font-size: 11px; color: white !important; width: auto;"><span class="dashicons dashicons-portfolio" style="font-size: 16px; margin-top: 4px;"></span> الأرشيف الرقمي</button>
                     <?php endif; ?>
-                    <button onclick="window.location.href='<?php echo add_query_arg('sm_tab', 'practice-licenses'); ?>&action=new'" class="sm-btn" style="background: #2c3e50; height: 38px; font-size: 11px; color: white !important; width: auto;">+ إصدار ترخيص مزاولة</button>
-                    <button onclick="window.location.href='<?php echo add_query_arg('sm_tab', 'facility-licenses'); ?>&action=new'" class="sm-btn" style="background: #27ae60; height: 38px; font-size: 11px; color: white !important; width: auto;">+ تسجيل منشأة جديدة</button>
+                    <button onclick="window.location.href='<?php echo add_query_arg('sm_tab', 'practice-licenses'); ?>&action=new'" class="sm-btn" style="background: #2c3e50; height: 38px; font-size: 11px; color: white !important; width: auto;" title="إصدار تصريح جديد">+ إصدار تصريح</button>
+                    <button onclick="window.location.href='<?php echo add_query_arg('sm_tab', 'facility-licenses'); ?>&action=new'" class="sm-btn" style="background: #27ae60; height: 38px; font-size: 11px; color: white !important; width: auto;" title="تسجيل منشأة أو مؤسسة">+ تسجيل منشأة</button>
                 </div>
             <?php endif; ?>
 
@@ -438,35 +499,46 @@ $greeting = ($hour >= 5 && $hour < 12) ? 'صباح الخير' : 'مساء ال�
                     <a href="javascript:void(0)" onclick="smToggleNotifications()" class="sm-header-circle-icon" title="التنبيهات">
                         <span class="dashicons dashicons-bell"></span>
                         <?php
-                        // Simple dynamic alerts for notifications
-                        $alerts = [];
+                        $notif_alerts = [];
                         if ($is_restricted) {
                             $member_by_wp = $wpdb->get_row($wpdb->prepare("SELECT id, last_paid_membership_year FROM {$wpdb->prefix}sm_members WHERE wp_user_id = %d", $user->ID));
                             if ($member_by_wp) {
                                 if ($member_by_wp->last_paid_membership_year < date('Y')) {
-                                    $alerts[] = 'يوجد متأخرات في تجديد العضوية السنوية';
+                                    $notif_alerts[] = ['text' => 'يوجد متأخرات في تجديد العضوية السنوية', 'type' => 'warning'];
                                 }
                             }
                         }
                         if (current_user_can('sm_manage_members')) {
                             $pending_updates = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}sm_update_requests WHERE status = 'pending'");
                             if ($pending_updates > 0) {
-                                $alerts[] = 'يوجد ' . $pending_updates . ' طلبات تحديث بيانات بانتظار المراجعة';
+                                $notif_alerts[] = ['text' => 'يوجد ' . $pending_updates . ' طلبات تحديث بيانات بانتظار المراجعة', 'type' => 'info'];
                             }
                         }
-                        if (count($alerts) > 0): ?>
+
+                        // Integrated System Alerts
+                        $sys_alerts = SM_DB::get_active_alerts_for_user($user->ID);
+                        foreach($sys_alerts as $sa) {
+                            $notif_alerts[] = ['text' => $sa->title, 'type' => 'system', 'id' => $sa->id];
+                        }
+
+                        if (count($notif_alerts) > 0): ?>
                             <span class="sm-icon-dot" style="background: #f6ad55;"></span>
                         <?php endif; ?>
                     </a>
                     <div id="sm-notifications-menu" style="display: none; position: absolute; top: 150%; left: 0; background: white; border: 1px solid var(--sm-border-color); border-radius: 8px; width: 300px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); z-index: 1000; padding: 15px;">
                         <h4 style="margin: 0 0 10px 0; font-size: 14px; border-bottom: 1px solid #eee; padding-bottom: 8px;">التنبيهات والإشعارات</h4>
-                        <?php if (empty($alerts)): ?>
+                        <?php if (empty($notif_alerts)): ?>
                             <div style="font-size: 12px; color: #94a3b8; text-align: center; padding: 10px;">لا توجد تنبيهات جديدة حالياً</div>
                         <?php else: ?>
-                            <?php foreach ($alerts as $a): ?>
+                            <?php foreach ($notif_alerts as $a): ?>
                                 <div style="font-size: 12px; padding: 8px; border-bottom: 1px solid #f9fafb; color: #4a5568; display: flex; gap: 8px; align-items: flex-start;">
-                                    <span class="dashicons dashicons-warning" style="font-size: 16px; color: #d69e2e;"></span>
-                                    <span><?php echo $a; ?></span>
+                                    <span class="dashicons <?php echo $a['type'] == 'system' ? 'dashicons-megaphone' : 'dashicons-warning'; ?>" style="font-size: 16px; color: <?php echo $a['type'] == 'system' ? 'var(--sm-primary-color)' : '#d69e2e'; ?>;"></span>
+                                    <span>
+                                        <?php echo $a['text']; ?>
+                                        <?php if($a['type'] == 'system'): ?>
+                                            <br><a href="javascript:location.reload()" style="font-size:10px; color:var(--sm-primary-color); font-weight:700;">عرض التفاصيل</a>
+                                        <?php endif; ?>
+                                    </span>
                                 </div>
                             <?php endforeach; ?>
                         <?php endif; ?>
@@ -710,6 +782,64 @@ $greeting = ($hour >= 5 && $hour < 12) ? 'صباح الخير' : 'مساء ال�
                             <button class="sm-tab-btn <?php echo ($sub == 'staff') ? 'sm-active' : ''; ?>" onclick="smOpenInternalTab('system-users-settings', this)">إدارة مستخدمي النظام</button>
                             <button class="sm-tab-btn <?php echo ($sub == 'backup') ? 'sm-active' : ''; ?>" onclick="smOpenInternalTab('backup-settings', this)">مركز النسخ الاحتياطي</button>
                             <button class="sm-tab-btn <?php echo ($sub == 'logs') ? 'sm-active' : ''; ?>" onclick="smOpenInternalTab('activity-logs', this)">سجل النشاطات</button>
+                        </div>
+
+                        <div id="system-alerts-settings" class="sm-internal-tab" style="display: <?php echo ($sub == 'alerts') ? 'block' : 'none'; ?>;">
+                            <div style="background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:20px; margin-bottom:20px;">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                                    <h4 style="margin:0;">إدارة تنبيهات النظام الشاملة</h4>
+                                    <button onclick="smOpenAddAlertModal()" class="sm-btn" style="width:auto; padding:8px 20px;">+ إنشاء تنبيه جديد</button>
+                                </div>
+
+                                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:10px; margin-bottom:20px;">
+                                    <button onclick="smApplyAlertTemplate('payment')" class="sm-btn sm-btn-outline" style="font-size:12px;">قالب: تذكير بالسداد</button>
+                                    <button onclick="smApplyAlertTemplate('expiry')" class="sm-btn sm-btn-outline" style="font-size:12px;">قالب: تنبيه انتهاء العضوية</button>
+                                    <button onclick="smApplyAlertTemplate('maintenance')" class="sm-btn sm-btn-outline" style="font-size:12px;">قالب: صيانة النظام</button>
+                                    <button onclick="smApplyAlertTemplate('docs')" class="sm-btn sm-btn-outline" style="font-size:12px;">قالب: تذكير الوثائق</button>
+                                    <button onclick="smApplyAlertTemplate('urgent')" class="sm-btn sm-btn-outline" style="font-size:12px;">قالب: قرار إداري عاجل</button>
+                                </div>
+
+                                <div class="sm-table-container" style="margin:0;">
+                                    <table class="sm-table">
+                                        <thead>
+                                            <tr>
+                                                <th>العنوان</th>
+                                                <th>المستوى</th>
+                                                <th>الإقرار</th>
+                                                <th>الحالة</th>
+                                                <th>إجراءات</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php
+                                            $alerts = SM_DB::get_alerts();
+                                            if (empty($alerts)): ?>
+                                                <tr><td colspan="5" style="text-align:center; padding:30px; color:#94a3b8;">لا توجد تنبيهات نشطة حالياً.</td></tr>
+                                            <?php else: foreach($alerts as $al):
+                                                $severity_map = ['info' => 'عادي (White)', 'warning' => 'تحذير (Orange)', 'critical' => 'هام جداً (Red)'];
+                                                $severity_color = ['info' => '#64748b', 'warning' => '#f59e0b', 'critical' => '#e53e3e'];
+                                            ?>
+                                                <tr>
+                                                    <td><strong><?php echo esc_html($al->title); ?></strong></td>
+                                                    <td><span style="color:<?php echo $severity_color[$al->severity]; ?>; font-weight:700;"><?php echo $severity_map[$al->severity]; ?></span></td>
+                                                    <td><?php echo $al->must_acknowledge ? '✅ نعم' : '❌ لا'; ?></td>
+                                                    <td>
+                                                        <span class="sm-badge <?php echo $al->status == 'active' ? 'sm-badge-high' : 'sm-badge-low'; ?>">
+                                                            <?php echo $al->status == 'active' ? 'نشط' : 'معطل'; ?>
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <div style="display:flex; gap:5px;">
+                                                            <button onclick='smEditAlert(<?php echo json_encode($al); ?>)' class="sm-btn sm-btn-outline" style="padding:4px 10px; font-size:11px;">تعديل</button>
+                                                            <button onclick="smDeleteAlert(<?php echo $al->id; ?>)" class="sm-btn" style="background:#e53e3e; padding:4px 10px; font-size:11px;">حذف</button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            <?php endforeach; endif; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
 
                         <div id="system-users-settings" class="sm-internal-tab" style="display: <?php echo ($sub == 'staff') ? 'block' : 'none'; ?>;">

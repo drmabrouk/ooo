@@ -662,6 +662,11 @@ class SM_Activator {
                 'title' => 'أخبار ومقالات',
                 'content' => '[smblog]',
                 'shortcode' => 'smblog'
+            ),
+            'services' => array(
+                'title' => 'الخدمات الرقمية',
+                'content' => '[services]',
+                'shortcode' => 'services'
             )
         );
 
