@@ -442,13 +442,25 @@ class SM_Public {
         $output .= '<div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">';
         $output .= '<div class="sm-form-group" style="grid-column: span 2;"><label class="sm-label">الاسم الرباعي الكامل:</label><input name="name" type="text" class="sm-input" required></div>';
         $output .= '<div class="sm-form-group"><label class="sm-label">الرقم القومي (14 رقم):</label><input name="national_id" type="text" class="sm-input" required maxlength="14"></div>';
-        $output .= '<div class="sm-form-group"><label class="sm-label">الجامعة:</label><input name="university" type="text" class="sm-input" required></div>';
-        $output .= '<div class="sm-form-group"><label class="sm-label">الكلية:</label><input name="faculty" type="text" class="sm-input" required></div>';
-        $output .= '<div class="sm-form-group"><label class="sm-label">القسم:</label><input name="department" type="text" class="sm-input" required></div>';
+        $output .= '<div class="sm-form-group"><label class="sm-label">الجامعة:</label><select id="reg_university" name="university" class="sm-select academic-cascading" required><option value="">-- اختر الجامعة --</option>';
+        foreach(SM_Settings::get_universities() as $k=>$v) $output .= "<option value='$k'>$v</option>";
+        $output .= '</select></div>';
+
+        $output .= '<div class="sm-form-group"><label class="sm-label">الكلية:</label><select id="reg_faculty" name="faculty" class="sm-select academic-cascading" required disabled><option value="">-- اختر الكلية --</option>';
+        foreach(SM_Settings::get_faculties() as $k=>$v) $output .= "<option value='$k'>$v</option>";
+        $output .= '</select></div>';
+
+        $output .= '<div class="sm-form-group"><label class="sm-label">القسم:</label><select id="reg_department" name="department" class="sm-select academic-cascading" required disabled><option value="">-- اختر القسم --</option>';
+        foreach(SM_Settings::get_departments() as $k=>$v) $output .= "<option value='$k'>$v</option>";
+        $output .= '</select></div>';
+
+        $output .= '<div class="sm-form-group"><label class="sm-label">التخصص:</label><select id="reg_specialization" name="specialization" class="sm-select academic-cascading" required disabled><option value="">-- اختر التخصص --</option>';
+        foreach(SM_Settings::get_specializations() as $k=>$v) $output .= "<option value='$k'>$v</option>";
+        $output .= '</select></div>';
+
         $output .= '<div class="sm-form-group"><label class="sm-label">تاريخ التخرج:</label><input name="graduation_date" type="date" class="sm-input" required></div>';
-        $output .= '<div class="sm-form-group"><label class="sm-label">المؤهل الدراسي:</label><select name="academic_degree" class="sm-select" required>';
-        $degrees = ['بكالوريوس' => 'بكالوريوس', 'دبلومات عليا' => 'دبلومات عليا', 'ماجستير' => 'ماجستير', 'دكتوراه' => 'دكتوراه'];
-        foreach($degrees as $k=>$v) $output .= "<option value='$k'>$v</option>";
+        $output .= '<div class="sm-form-group"><label class="sm-label">الدرجة العلمية:</label><select name="academic_degree" class="sm-select" required>';
+        foreach(SM_Settings::get_academic_degrees() as $k=>$v) $output .= "<option value='$k'>$v</option>";
         $output .= '</select></div>';
         $output .= '<div class="sm-form-group"><label class="sm-label">محافظة الإقامة:</label><select name="residence_governorate" class="sm-select" required><option value="">-- اختر --</option>';
         foreach(SM_Settings::get_governorates() as $k=>$v) $output .= "<option value='$k'>$v</option>";
@@ -586,9 +598,22 @@ class SM_Public {
                 document.getElementById("sm-membership-request-form").reset();
             }
         }
+        document.querySelectorAll(".academic-cascading").forEach((el, idx, arr) => {
+            el.addEventListener("change", function() {
+                if (this.value && idx < arr.length - 1) {
+                    arr[idx + 1].disabled = false;
+                } else if (!this.value) {
+                    for (let i = idx + 1; i < arr.length; i++) {
+                        arr[i].value = "";
+                        arr[i].disabled = true;
+                    }
+                }
+            });
+        });
+
         function smRegNext(step) {
             if (step === 2) {
-                const required = ["name", "national_id", "university", "faculty", "department", "graduation_date", "residence_street", "residence_city", "residence_governorate", "governorate", "phone", "email"];
+                const required = ["name", "national_id", "university", "faculty", "department", "specialization", "graduation_date", "residence_street", "residence_city", "residence_governorate", "governorate", "phone", "email"];
                 for (const name of required) {
                     const el = document.querySelector(`#sm-membership-request-form [name="${name}"]`);
                     if (!el.value) return alert("يرجى ملء كافة الحقول المطلوبة قبل الانتقال للخطوة التالية.");
@@ -1523,11 +1548,12 @@ class SM_Public {
         $req = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}sm_service_requests WHERE id = %d", $id));
         if (!$req) wp_send_json_error('Request not found');
 
-        $res = SM_DB::update_service_request_status($id, $status);
+        $service = $wpdb->get_row($wpdb->prepare("SELECT fees, name FROM {$wpdb->prefix}sm_services WHERE id = %d", $req->service_id));
+        $res = SM_DB::update_service_request_status($id, $status, ($status === 'approved' && $service) ? $service->fees : null);
+
         if ($res) {
              if ($status === 'approved') {
                  // Record in finance if fees > 0
-                 $service = $wpdb->get_row($wpdb->prepare("SELECT fees, name FROM {$wpdb->prefix}sm_services WHERE id = %d", $req->service_id));
                  if ($service && $service->fees > 0) {
                       SM_Finance::record_payment([
                           'member_id' => $req->member_id,

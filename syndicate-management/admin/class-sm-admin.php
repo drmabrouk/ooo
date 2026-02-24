@@ -196,6 +196,33 @@ class SM_Admin {
             exit;
         }
 
+        if (isset($_POST['sm_save_academic_options'])) {
+            check_admin_referer('sm_admin_action', 'sm_admin_nonce');
+
+            $fields = [
+                'universities' => 'save_universities',
+                'faculties' => 'save_faculties',
+                'departments' => 'save_departments',
+                'specializations' => 'save_specializations'
+            ];
+
+            foreach ($fields as $post_key => $save_method) {
+                $raw = explode("\n", str_replace("\r", "", $_POST[$post_key] ?? ''));
+                $data = array();
+                foreach ($raw as $line) {
+                    $parts = explode("|", $line);
+                    if (count($parts) == 2) {
+                        $data[trim($parts[0])] = trim($parts[1]);
+                    }
+                }
+                if (!empty($data)) {
+                    SM_Settings::$save_method($data);
+                }
+            }
+            wp_redirect(add_query_arg(['sm_tab' => 'global-settings', 'sub' => 'academic', 'settings_saved' => 1], wp_get_referer()));
+            exit;
+        }
+
         $member_filters = array();
         $stats = SM_DB::get_statistics();
         $members = SM_DB::get_members();

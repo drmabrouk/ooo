@@ -6,6 +6,10 @@ $requests = SM_DB::get_update_requests($status_filter);
 $specs = SM_Settings::get_specializations();
 $govs = SM_Settings::get_governorates();
 $grades = SM_Settings::get_professional_grades();
+$univs = SM_Settings::get_universities();
+$facs = SM_Settings::get_faculties();
+$depts = SM_Settings::get_departments();
+$degrees = SM_Settings::get_academic_degrees();
 ?>
 
 <div class="sm-admin-dashboard" dir="rtl">
@@ -68,6 +72,11 @@ $grades = SM_Settings::get_professional_grades();
                                         case 'governorate': $label = 'المحافظة'; $v = $govs[$v] ?? $v; $old_val = $govs[$old_val] ?? $old_val; break;
                                         case 'specialization': $label = 'التخصص'; $v = $specs[$v] ?? $v; $old_val = $specs[$old_val] ?? $old_val; break;
                                         case 'professional_grade': $label = 'الدرجة'; $v = $grades[$v] ?? $v; $old_val = $grades[$old_val] ?? $old_val; break;
+                                        case 'university': $label = 'الجامعة'; $v = $univs[$v] ?? $v; $old_val = $univs[$old_val] ?? $old_val; break;
+                                        case 'faculty': $label = 'الكلية'; $v = $facs[$v] ?? $v; $old_val = $facs[$old_val] ?? $old_val; break;
+                                        case 'department': $label = 'القسم'; $v = $depts[$v] ?? $v; $old_val = $depts[$old_val] ?? $old_val; break;
+                                        case 'academic_degree': $label = 'الدرجة العلمية'; $v = $degrees[$v] ?? $v; $old_val = $degrees[$old_val] ?? $old_val; break;
+                                        case 'residence_governorate': $label = 'محافظة السكن'; $v = $govs[$v] ?? $v; $old_val = $govs[$old_val] ?? $old_val; break;
                                     }
                                     if ($label) echo "<div><strong>$label:</strong> <span style='color: #c53030; text-decoration: line-through;'>$old_val</span> &larr; <span style='color: #2f855a;'>$v</span></div>";
                                 }

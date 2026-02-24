@@ -667,7 +667,8 @@ $greeting = ($hour >= 5 && $hour < 12) ? 'صباح الخير' : 'مساء ال�
                         <a href="<?php echo add_query_arg('sm_tab', 'global-settings'); ?>" class="sm-sidebar-link"><span class="dashicons dashicons-admin-generic"></span> إعدادات النظام</a>
                         <ul class="sm-sidebar-dropdown" style="display: <?php echo $active_tab == 'global-settings' ? 'block' : 'none'; ?>;">
                             <li><a href="<?php echo add_query_arg('sm_tab', 'global-settings'); ?>&sub=init" class="<?php echo (!isset($_GET['sub']) || $_GET['sub'] == 'init') ? 'sm-sub-active' : ''; ?>"><span class="dashicons dashicons-admin-tools"></span> تهيئة النظام</a></li>
-                            <li><a href="<?php echo add_query_arg('sm_tab', 'global-settings'); ?>&sub=professional" class="<?php echo ($_GET['sub'] ?? '') == 'professional' ? 'sm-sub-active' : ''; ?>"><span class="dashicons dashicons-businessman"></span> الدرجات والتخصصات</a></li>
+                            <li><a href="<?php echo add_query_arg('sm_tab', 'global-settings'); ?>&sub=professional" class="<?php echo ($_GET['sub'] ?? '') == 'professional' ? 'sm-sub-active' : ''; ?>"><span class="dashicons dashicons-businessman"></span> الدرجات الوظيفية</a></li>
+                            <li><a href="<?php echo add_query_arg('sm_tab', 'global-settings'); ?>&sub=academic" class="<?php echo ($_GET['sub'] ?? '') == 'academic' ? 'sm-sub-active' : ''; ?>"><span class="dashicons dashicons-welcome-learn-more"></span> الحقول الأكاديمية</a></li>
                             <li><a href="<?php echo add_query_arg('sm_tab', 'global-settings'); ?>&sub=finance" class="<?php echo ($_GET['sub'] ?? '') == 'finance' ? 'sm-sub-active' : ''; ?>"><span class="dashicons dashicons-money-alt"></span> الرسوم والغرامات</a></li>
                             <li><a href="<?php echo add_query_arg('sm_tab', 'global-settings'); ?>&sub=notifications" class="<?php echo ($_GET['sub'] ?? '') == 'notifications' ? 'sm-sub-active' : ''; ?>"><span class="dashicons dashicons-email"></span> التنبيهات والبريد</a></li>
                             <li><a href="<?php echo add_query_arg('sm_tab', 'global-settings'); ?>&sub=design" class="<?php echo ($_GET['sub'] ?? '') == 'design' ? 'sm-sub-active' : ''; ?>"><span class="dashicons dashicons-art"></span> التصميم والمظهر</a></li>
@@ -1006,7 +1007,8 @@ $greeting = ($hour >= 5 && $hour < 12) ? 'صباح الخير' : 'مساء ال�
                         ?>
                         <div class="sm-tabs-wrapper" style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #eee; overflow-x: auto; white-space: nowrap; padding-bottom: 10px;">
                             <button class="sm-tab-btn <?php echo $sub == 'init' ? 'sm-active' : ''; ?>" onclick="smOpenInternalTab('syndicate-settings', this)">تهيئة النظام</button>
-                            <button class="sm-tab-btn <?php echo $sub == 'professional' ? 'sm-active' : ''; ?>" onclick="smOpenInternalTab('professional-settings', this)">الدرجات والتخصصات</button>
+                            <button class="sm-tab-btn <?php echo $sub == 'professional' ? 'sm-active' : ''; ?>" onclick="smOpenInternalTab('professional-settings', this)">الدرجات الوظيفية</button>
+                            <button class="sm-tab-btn <?php echo $sub == 'academic' ? 'sm-active' : ''; ?>" onclick="smOpenInternalTab('academic-settings', this)">الحقول الأكاديمية</button>
                             <button class="sm-tab-btn <?php echo $sub == 'finance' ? 'sm-active' : ''; ?>" onclick="smOpenInternalTab('finance-settings', this)">الرسوم والغرامات</button>
                             <button class="sm-tab-btn <?php echo $sub == 'notifications' ? 'sm-active' : ''; ?>" onclick="smOpenInternalTab('notification-settings', this)">التنبيهات والبريد</button>
                             <button class="sm-tab-btn <?php echo $sub == 'design' ? 'sm-active' : ''; ?>" onclick="smOpenInternalTab('design-settings', this)">التصميم والمظهر</button>
@@ -1081,7 +1083,7 @@ $greeting = ($hour >= 5 && $hour < 12) ? 'صباح الخير' : 'مساء ال�
                         <div id="professional-settings" class="sm-internal-tab" style="display: <?php echo ($sub == 'professional') ? 'block' : 'none'; ?>;">
                             <form method="post">
                                 <?php wp_nonce_field('sm_admin_action', 'sm_admin_nonce'); ?>
-                                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:30px;">
+                                <div style="display:grid; grid-template-columns: 1fr; gap:30px;">
                                     <div class="sm-form-group">
                                         <label class="sm-label">الدرجات الوظيفية (درجة واحدة في كل سطر):</label>
                                         <textarea name="professional_grades" class="sm-textarea" rows="8"><?php
@@ -1089,15 +1091,48 @@ $greeting = ($hour >= 5 && $hour < 12) ? 'صباح الخير' : 'مساء ال�
                                         ?></textarea>
                                         <p style="font-size:11px; color:#666; margin-top:5px;">التنسيق: key|Label (مثال: expert|خبير)</p>
                                     </div>
-                                    <div class="sm-form-group">
-                                        <label class="sm-label">التخصصات المهنية (تخصص واحد في كل سطر):</label>
-                                        <textarea name="specializations" class="sm-textarea" rows="8"><?php
-                                            foreach (SM_Settings::get_specializations() as $k => $v) echo "$k|$v\n";
-                                        ?></textarea>
-                                        <p style="font-size:11px; color:#666; margin-top:5px;">التنسيق: key|Label (مثال: massage|تدليك رياضي)</p>
-                                    </div>
                                 </div>
                                 <button type="submit" name="sm_save_professional_options" class="sm-btn" style="width:auto; margin-top:10px;">حفظ الخيارات المهنية</button>
+                            </form>
+                        </div>
+
+                        <div id="academic-settings" class="sm-internal-tab" style="display: <?php echo ($sub == 'academic') ? 'block' : 'none'; ?>;">
+                            <form method="post">
+                                <?php wp_nonce_field('sm_admin_action', 'sm_admin_nonce'); ?>
+                                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:30px;">
+                                    <div class="sm-form-group">
+                                        <label class="sm-label">قائمة الجامعات (جامعة واحدة في كل سطر):</label>
+                                        <textarea name="universities" class="sm-textarea" rows="10"><?php
+                                            foreach (SM_Settings::get_universities() as $k => $v) echo "$k|$v\n";
+                                        ?></textarea>
+                                        <p style="font-size:11px; color:#666; margin-top:5px;">التنسيق: key|Label</p>
+                                    </div>
+                                    <div class="sm-form-group">
+                                        <label class="sm-label">قائمة الكليات (كلية واحدة في كل سطر):</label>
+                                        <textarea name="faculties" class="sm-textarea" rows="10"><?php
+                                            foreach (SM_Settings::get_faculties() as $k => $v) echo "$k|$v\n";
+                                        ?></textarea>
+                                        <p style="font-size:11px; color:#666; margin-top:5px;">التنسيق: key|Label</p>
+                                    </div>
+                                    <div class="sm-form-group">
+                                        <label class="sm-label">قائمة الأقسام (قسم واحد في كل سطر):</label>
+                                        <textarea name="departments" class="sm-textarea" rows="10"><?php
+                                            foreach (SM_Settings::get_departments() as $k => $v) echo "$k|$v\n";
+                                        ?></textarea>
+                                        <p style="font-size:11px; color:#666; margin-top:5px;">التنسيق: key|Label</p>
+                                    </div>
+                                    <div class="sm-form-group">
+                                        <label class="sm-label">قائمة التخصصات (تخصص واحد في كل سطر):</label>
+                                        <textarea name="specializations" class="sm-textarea" rows="10"><?php
+                                            foreach (SM_Settings::get_specializations() as $k => $v) echo "$k|$v\n";
+                                        ?></textarea>
+                                        <p style="font-size:11px; color:#666; margin-top:5px;">التنسيق: key|Label</p>
+                                    </div>
+                                </div>
+                                <div style="margin-top: 20px; padding: 15px; background: #fffaf0; border: 1px solid #feebc8; border-radius: 8px; font-size: 13px; color: #744210;">
+                                    <strong>ملاحظة:</strong> سيتم استخدام هذه القوائم في نماذج التسجيل وتعديل البيانات بشكل تسلسلي (جامعة ← كلية ← قسم ← تخصص).
+                                </div>
+                                <button type="submit" name="sm_save_academic_options" class="sm-btn" style="width:auto; margin-top:20px; padding: 0 40px; height: 45px;">حفظ الحقول الأكاديمية</button>
                             </form>
                         </div>
 
