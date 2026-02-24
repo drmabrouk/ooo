@@ -145,8 +145,8 @@ $acc_status = SM_Finance::get_member_status($member->id);
 
             <!-- Professional Permits Section -->
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                <!-- Practice License Card -->
-                <div class="sm-license-card" style="background: #fff; border-radius: 12px; border: 1px solid var(--sm-border-color); overflow: hidden; box-shadow: var(--sm-shadow);">
+                <!-- Practice Permit Card -->
+                <div class="sm-license-card" style="background: #fff; border-radius: 12px; border: 1px solid var(--sm-border-color); overflow: hidden; box-shadow: var(--sm-shadow); display: flex; flex-direction: column;">
                     <div style="background: var(--sm-primary-color); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; color: #fff;">
                         <h4 style="margin: 0; font-weight: 800;"><span class="dashicons dashicons-id-alt" style="vertical-align: middle;"></span> تصريح مزاولة المهنة</h4>
                         <?php
@@ -158,11 +158,11 @@ $acc_status = SM_Finance::get_member_status($member->id);
                             <?php echo empty($member->license_number) ? 'غير مسجل' : ($lic_valid ? 'ساري' : 'منتهي'); ?>
                         </span>
                     </div>
-                    <div style="padding: 20px;">
+                    <div style="padding: 20px; flex: 1;">
                         <?php if (empty($member->license_number)): ?>
                             <div style="text-align: center; color: #94a3b8; padding: 20px;">
                                 <span class="dashicons dashicons-warning" style="font-size: 32px; width: 32px; height: 32px;"></span>
-                                <p style="margin-top: 10px; font-weight: 700;">غير مقيد بسجل تصاريح المزاولة</p>
+                                <p style="margin-top: 10px; font-weight: 700;">غير مقيد / ليس في سجلات التصاريح</p>
                             </div>
                         <?php else: ?>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
@@ -188,10 +188,21 @@ $acc_status = SM_Finance::get_member_status($member->id);
                             </div>
                         <?php endif; ?>
                     </div>
+                    <div style="padding: 15px 20px; background: #f8fafc; border-top: 1px solid #eee;">
+                        <div class="sm-dropdown" style="position:relative; width: 100%;">
+                            <button onclick="smToggleCardOptions('permit-options')" class="sm-btn sm-btn-outline" style="width: 100%; font-size: 12px; justify-content: space-between;">
+                                خيارات الطلبات <span class="dashicons dashicons-arrow-down-alt2"></span>
+                            </button>
+                            <div id="permit-options" class="sm-dropdown-menu" style="display:none; position:absolute; bottom:100%; right:0; width:100%; background:white; border:1px solid #eee; border-radius:8px; box-shadow:0 -10px 25px rgba(0,0,0,0.1); z-index:10;">
+                                <a href="javascript:smRequestPermitTest(<?php echo $member->id; ?>)" class="sm-dropdown-item"><span class="dashicons dashicons-welcome-learn-more"></span> طلب اختبار تصريح مزاولة</a>
+                                <a href="javascript:smRequestPermitRenewal(<?php echo $member->id; ?>)" class="sm-dropdown-item"><span class="dashicons dashicons-update"></span> طلب تجديد تصريح</a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Facility License Card -->
-                <div class="sm-license-card" style="background: #fff; border-radius: 12px; border: 1px solid var(--sm-border-color); overflow: hidden; box-shadow: var(--sm-shadow);">
+                <!-- Establishment License Card -->
+                <div class="sm-license-card" style="background: #fff; border-radius: 12px; border: 1px solid var(--sm-border-color); overflow: hidden; box-shadow: var(--sm-shadow); display: flex; flex-direction: column;">
                     <div style="background: #2c3e50; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; color: #fff;">
                         <h4 style="margin: 0; font-weight: 800;"><span class="dashicons dashicons-building" style="vertical-align: middle;"></span> ترخيص المنشأة</h4>
                         <?php
@@ -203,11 +214,11 @@ $acc_status = SM_Finance::get_member_status($member->id);
                             <?php echo empty($member->facility_number) ? 'غير مسجل' : ($fac_valid ? 'ساري' : 'منتهي'); ?>
                         </span>
                     </div>
-                    <div style="padding: 20px;">
+                    <div style="padding: 20px; flex: 1;">
                         <?php if (empty($member->facility_number)): ?>
                             <div style="text-align: center; color: #94a3b8; padding: 20px;">
                                 <span class="dashicons dashicons-building" style="font-size: 32px; width: 32px; height: 32px;"></span>
-                                <p style="margin-top: 10px; font-weight: 700;">لم يتم تسجيل منشأة لهذا العضو</p>
+                                <p style="margin-top: 10px; font-weight: 700;">لا توجد منشأة مسجلة</p>
                             </div>
                         <?php else: ?>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
@@ -225,6 +236,23 @@ $acc_status = SM_Finance::get_member_status($member->id);
                                 <?php if (current_user_can('sm_print_reports')): ?>
                                     <a href="<?php echo admin_url('admin-ajax.php?action=sm_print_facility&member_id='.$member->id); ?>" target="_blank" class="sm-btn sm-btn-outline" style="height: 32px; font-size: 11px; width: auto;"><span class="dashicons dashicons-printer"></span> طباعة الترخيص</a>
                                 <?php endif; ?>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                    <div style="padding: 15px 20px; background: #f8fafc; border-top: 1px solid #eee;">
+                        <?php if (!empty($member->license_number) && $lic_valid): ?>
+                            <div class="sm-dropdown" style="position:relative; width: 100%;">
+                                <button onclick="smToggleCardOptions('fac-options')" class="sm-btn sm-btn-outline" style="width: 100%; font-size: 12px; justify-content: space-between;">
+                                    خيارات الطلبات <span class="dashicons dashicons-arrow-down-alt2"></span>
+                                </button>
+                                <div id="fac-options" class="sm-dropdown-menu" style="display:none; position:absolute; bottom:100%; right:0; width:100%; background:white; border:1px solid #eee; border-radius:8px; box-shadow:0 -10px 25px rgba(0,0,0,0.1); z-index:10;">
+                                    <a href="javascript:smRequestFacilityLicense(<?php echo $member->id; ?>)" class="sm-dropdown-item"><span class="dashicons dashicons-plus"></span> طلب ترخيص منشأة جديدة</a>
+                                    <a href="javascript:smRequestFacilityRenewal(<?php echo $member->id; ?>)" class="sm-dropdown-item"><span class="dashicons dashicons-update"></span> طلب تجديد ترخيص منشأة</a>
+                                </div>
+                            </div>
+                        <?php else: ?>
+                            <div style="font-size: 11px; color: #718096; text-align: center; font-style: italic;">
+                                يتطلب تصريح مزاولة ساري لطلب ترخيص منشأة
                             </div>
                         <?php endif; ?>
                     </div>
@@ -361,6 +389,40 @@ function smToggleFinanceDropdown() {
     const el = document.getElementById('sm-finance-dropdown');
     el.style.display = el.style.display === 'none' ? 'block' : 'none';
 }
+
+function smToggleCardOptions(id) {
+    const el = document.getElementById(id);
+    const all = document.querySelectorAll('.sm-dropdown-menu');
+    all.forEach(m => { if(m.id !== id) m.style.display = 'none'; });
+    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+function smSubmitProfRequest(type, memberId) {
+    if (!confirm('هل أنت متأكد من إرسال هذا الطلب؟')) return;
+
+    const fd = new FormData();
+    fd.append('action', 'sm_submit_professional_request');
+    fd.append('member_id', memberId);
+    fd.append('request_type', type);
+    fd.append('nonce', '<?php echo wp_create_nonce("sm_professional_action"); ?>');
+
+    fetch('<?php echo admin_url('admin-ajax.php'); ?>', { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(res => {
+        if (res.success) {
+            smShowNotification('تم إرسال الطلب بنجاح. سيظهر في تبويب الطلبات لدى الإدارة.');
+            const menus = document.querySelectorAll('.sm-dropdown-menu');
+            menus.forEach(m => m.style.display = 'none');
+        } else {
+            alert('خطأ: ' + res.data);
+        }
+    });
+}
+
+function smRequestPermitTest(mid) { smSubmitProfRequest('permit_test', mid); }
+function smRequestPermitRenewal(mid) { smSubmitProfRequest('permit_renewal', mid); }
+function smRequestFacilityLicense(mid) { smSubmitProfRequest('facility_new', mid); }
+function smRequestFacilityRenewal(mid) { smSubmitProfRequest('facility_renewal', mid); }
 
 function smTriggerPhotoUpload() {
     document.getElementById('member-photo-input').click();

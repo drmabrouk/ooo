@@ -2769,6 +2769,46 @@ class SM_Public {
         <?php
     }
 
+    public function ajax_submit_professional_request() {
+        if (!is_user_logged_in()) wp_send_json_error('Unauthorized');
+        check_ajax_referer('sm_professional_action', 'nonce');
+
+        $member_id = intval($_POST['member_id']);
+        $type = sanitize_text_field($_POST['request_type']);
+
+        // Basic verification
+        if (!$this->can_access_member($member_id)) wp_send_json_error('Access denied');
+
+        $res = SM_DB::add_professional_request($member_id, $type);
+        if ($res) {
+            $type_labels = [
+                'permit_test' => 'طلب اختبار تصريح مزاولة',
+                'permit_renewal' => 'طلب تجديد تصريح مزاولة',
+                'facility_new' => 'طلب ترخيص منشأة جديدة',
+                'facility_renewal' => 'طلب تجديد ترخيص منشأة'
+            ];
+            SM_Logger::log($type_labels[$type] ?? 'طلب مهني جديد', "العضو ID: $member_id");
+            wp_send_json_success();
+        } else {
+            wp_send_json_error('فشل في تقديم الطلب');
+        }
+    }
+
+    public function ajax_process_professional_request() {
+        if (!current_user_can('sm_manage_members')) wp_send_json_error('Unauthorized');
+        check_ajax_referer('sm_admin_action', 'nonce');
+
+        $id = intval($_POST['request_id']);
+        $status = sanitize_text_field($_POST['status']);
+        $notes = sanitize_textarea_field($_POST['notes'] ?? '');
+
+        if (SM_DB::process_professional_request($id, $status, $notes)) {
+            wp_send_json_success();
+        } else {
+            wp_send_json_error('فشل في معالجة الطلب');
+        }
+    }
+
     public function ajax_submit_membership_request_stage3() {
         $nid = sanitize_text_field($_POST['national_id']);
         global $wpdb;

@@ -353,6 +353,27 @@
         document.getElementById('sm-alert-modal').style.display = 'flex';
     };
 
+    window.smProcessProfRequest = function(id, status) {
+        const notes = prompt('ملاحظات إضافية (اختياري):');
+        if (notes === null) return;
+
+        const fd = new FormData();
+        fd.append('action', 'sm_process_professional_request');
+        fd.append('request_id', id);
+        fd.append('status', status);
+        fd.append('notes', notes);
+        fd.append('nonce', '<?php echo wp_create_nonce("sm_admin_action"); ?>');
+
+        fetch(ajaxurl, { method: 'POST', body: fd })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                smShowNotification('تم تحديث حالة الطلب');
+                location.reload();
+            } else alert('خطأ: ' + res.data);
+        });
+    };
+
     window.smDeleteAlert = function(id) {
         if(!confirm('هل أنت متأكد من حذف هذا التنبيه؟')) return;
         const fd = new FormData();
@@ -411,7 +432,7 @@ $is_officer = $is_syndicate_admin || $is_syndicate_member;
 
 $active_tab = isset($_GET['sm_tab']) ? sanitize_text_field($_GET['sm_tab']) : 'summary';
 $is_restricted = $is_member || $is_syndicate_member;
-if ($is_restricted && !in_array($active_tab, ['my-profile', 'member-profile', 'messaging', 'surveys'])) {
+if ($is_restricted && !in_array($active_tab, ['my-profile', 'member-profile', 'messaging', 'surveys', 'digital-services'])) {
     $active_tab = 'my-profile';
 }
 
@@ -759,8 +780,11 @@ $greeting = ($hour >= 5 && $hour < 12) ? 'صباح الخير' : 'مساء ال�
                     if ($is_admin || $is_sys_admin || $is_syndicate_admin) {
                         include SM_PLUGIN_DIR . 'templates/admin-surveys.php';
                     } elseif ($is_syndicate_member || $is_member) {
-                        // Members see only active surveys to participate
+                        echo '<div class="sm-member-surveys-view" style="background:#fff; padding:30px; border-radius:12px; border:1px solid #e2e8f0; min-height:400px;">';
+                        echo '<h2 style="margin:0 0 10px 0; font-weight:800; color:var(--sm-dark-color);">استطلاعات الرأي والبيانات</h2>';
+                        echo '<p style="color:#64748b; margin-bottom:30px; font-size:14px;">يرجى المشاركة في الاستطلاعات المتاحة لتحسين جودة الخدمات النقابية.</p>';
                         include SM_PLUGIN_DIR . 'templates/public-dashboard-summary.php';
+                        echo '</div>';
                     }
                     break;
 

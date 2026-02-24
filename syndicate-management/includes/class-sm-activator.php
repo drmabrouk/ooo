@@ -404,6 +404,22 @@ class SM_Activator {
             KEY user_id (user_id)
         ) $charset_collate;\n";
 
+        // Professional Workflow Requests Table
+        $table_name = $wpdb->prefix . 'sm_professional_requests';
+        $sql .= "CREATE TABLE $table_name (
+            id mediumint(9) NOT NULL AUTO_INCREMENT,
+            member_id mediumint(9) NOT NULL,
+            request_type enum('permit_test', 'permit_renewal', 'facility_new', 'facility_renewal') NOT NULL,
+            status enum('pending', 'approved', 'rejected') DEFAULT 'pending',
+            admin_notes text,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
+            processed_at datetime,
+            processed_by bigint(20),
+            PRIMARY KEY  (id),
+            KEY member_id (member_id),
+            KEY status (status)
+        ) $charset_collate;\n";
+
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';
         dbDelta($sql);
 

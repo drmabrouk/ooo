@@ -41,6 +41,13 @@ $registry = $wpdb->get_results($wpdb->prepare(
         <button onclick="smOpenLicenseIssuanceModal()" class="sm-btn" style="width:auto;">+ إصدار / تجديد تصريح</button>
     </div>
 
+    <div class="sm-tabs-wrapper" style="display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 2px solid #eee; padding-bottom: 10px;">
+        <button class="sm-tab-btn sm-active" onclick="smOpenInternalTab('license-registry', this)">سجل التراخيص</button>
+        <button class="sm-tab-btn" onclick="smOpenInternalTab('permit-requests', this)">طلبات التصاريح والامتحانات</button>
+    </div>
+
+    <div id="license-registry" class="sm-internal-tab">
+
     <div class="sm-card-grid" style="margin-bottom: 30px;">
         <div class="sm-stat-card">
             <div style="font-size: 0.85em; color: var(--sm-text-gray);">إجمالي التراخيص</div>
