@@ -128,6 +128,7 @@ class SM_Public {
         add_shortcode('smabout', array($this, 'shortcode_about'));
         add_shortcode('smcontact', array($this, 'shortcode_contact'));
         add_shortcode('smblog', array($this, 'shortcode_blog'));
+        add_shortcode('services', array($this, 'shortcode_services'));
 
         add_filter('authenticate', array($this, 'custom_authenticate'), 20, 3);
         add_filter('auth_cookie_expiration', array($this, 'custom_auth_cookie_expiration'), 10, 3);
@@ -173,6 +174,49 @@ class SM_Public {
     public function shortcode_verify() {
         ob_start();
         include SM_PLUGIN_DIR . 'templates/public-verification.php';
+        return ob_get_clean();
+    }
+
+    public function shortcode_services() {
+        $services = SM_DB::get_services(['status' => 'active']);
+        $is_logged_in = is_user_logged_in();
+        $login_url = home_url('/sm-login');
+
+        ob_start();
+        ?>
+        <div class="sm-public-page" dir="rtl">
+            <div class="sm-page-header">
+                <h2>الخدمات الرقمية</h2>
+                <p>مجموعة من الخدمات الإلكترونية المتاحة لأعضاء النقابة</p>
+            </div>
+            <div class="sm-content-container">
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; margin-top: 50px;">
+                    <?php if (empty($services)): ?>
+                        <div style="grid-column: 1/-1; text-align: center; padding: 50px; color: #94a3b8;">لا توجد خدمات متاحة حالياً.</div>
+                    <?php else: ?>
+                        <?php foreach ($services as $s): ?>
+                            <div class="sm-service-card" style="background: #fff; border: 1px solid var(--sm-border-color); border-radius: 20px; padding: 30px; display: flex; flex-direction: column; transition: 0.3s; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);">
+                                <div style="width: 60px; height: 60px; background: var(--sm-primary-color); border-radius: 15px; display: flex; align-items: center; justify-content: center; color: #fff; margin-bottom: 25px;">
+                                    <span class="dashicons dashicons-cloud" style="font-size: 30px; width: 30px; height: 30px;"></span>
+                                </div>
+                                <h3 style="margin: 0 0 15px 0; font-weight: 800; color: var(--sm-dark-color); font-size: 1.4em;"><?php echo esc_html($s->name); ?></h3>
+                                <p style="font-size: 14px; color: #64748b; line-height: 1.8; margin-bottom: 25px; flex: 1;"><?php echo esc_html($s->description); ?></p>
+
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: auto; padding-top: 20px; border-top: 1px solid #f1f5f9;">
+                                    <div style="font-weight: 800; color: var(--sm-primary-color); font-size: 1.1em;"><?php echo $s->fees > 0 ? number_format($s->fees, 2) . ' ج.م' : 'خدمة مجانية'; ?></div>
+                                    <?php if ($is_logged_in): ?>
+                                        <a href="<?php echo add_query_arg('sm_tab', 'digital-services', home_url('/sm-admin')); ?>" class="sm-btn" style="width: auto; padding: 10px 25px; border-radius: 10px;">طلب الخدمة</a>
+                                    <?php else: ?>
+                                        <button onclick="window.location.href='<?php echo $login_url; ?>'" class="sm-btn" style="width: auto; padding: 10px 25px; border-radius: 10px;">تسجيل الدخول للطلب</button>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+        <?php
         return ob_get_clean();
     }
 
@@ -2385,6 +2429,38 @@ class SM_Public {
         $alert_id = intval($_POST['alert_id']);
         if (SM_DB::acknowledge_alert($alert_id, get_current_user_id())) wp_send_json_success();
         else wp_send_json_error('Failed to acknowledge alert');
+    }
+
+    public function ajax_export_finance_report() {
+        if (!current_user_can('sm_manage_finance')) wp_die('Unauthorized');
+        $type = sanitize_text_field($_GET['type']);
+
+        global $wpdb;
+        $title = "تقرير مالي";
+        $data = [];
+
+        $members = SM_DB::get_members(['limit' => -1]);
+
+        foreach ($members as $m) {
+            $dues = SM_Finance::calculate_member_dues($m->id);
+            if ($type === 'overdue_membership' && $dues['membership_balance'] > 0) {
+                $data[] = ['name' => $m->name, 'nid' => $m->national_id, 'amount' => $dues['membership_balance'], 'details' => 'متأخرات اشتراك'];
+            } elseif ($type === 'unpaid_fines' && $dues['penalty_balance'] > 0) {
+                $data[] = ['name' => $m->name, 'nid' => $m->national_id, 'amount' => $dues['penalty_balance'], 'details' => 'غرامات غير مسددة'];
+            } elseif ($type === 'full_liabilities' && $dues['balance'] > 0) {
+                $data[] = ['name' => $m->name, 'nid' => $m->national_id, 'amount' => $dues['balance'], 'details' => 'إجمالي المديونية'];
+            }
+        }
+
+        $title_map = [
+            'overdue_membership' => 'تقرير متأخرات اشتراكات العضوية',
+            'unpaid_fines' => 'تقرير الغرامات المالية غير المسددة',
+            'full_liabilities' => 'تقرير المديونيات المالية الشامل'
+        ];
+        $title = $title_map[$type] ?? $title;
+
+        include SM_PLUGIN_DIR . 'templates/print-finance-report.php';
+        exit;
     }
 
     public function ajax_generate_pub_doc() {

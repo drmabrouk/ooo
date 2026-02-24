@@ -255,4 +255,37 @@ class SM_Finance {
             'total_penalty' => $total_penalty
         ];
     }
+
+    public static function get_top_delayed_members($limit = 10) {
+        $members = SM_DB::get_members(['limit' => -1]);
+        $delayed = [];
+        $current_year = (int)date('Y');
+
+        foreach ($members as $m) {
+            $dues = self::calculate_member_dues($m->id);
+            if ($dues['balance'] > 0) {
+                // Calculate delay duration
+                $last_paid_year = (int)$m->last_paid_membership_year ?: ((int)date('Y', strtotime($m->registration_date)) - 1);
+                $delay_years = $current_year - $last_paid_year;
+
+                $delayed[] = [
+                    'id' => $m->id,
+                    'name' => $m->name,
+                    'governorate' => $m->governorate,
+                    'balance' => $dues['balance'],
+                    'delay_years' => $delay_years
+                ];
+            }
+        }
+
+        // Sort by balance DESC (highest amount) then delay duration
+        usort($delayed, function($a, $b) {
+            if ($b['balance'] == $a['balance']) {
+                return $b['delay_years'] <=> $a['delay_years'];
+            }
+            return $b['balance'] <=> $a['balance'];
+        });
+
+        return array_slice($delayed, 0, $limit);
+    }
 }

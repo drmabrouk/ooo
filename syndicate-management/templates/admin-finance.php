@@ -18,6 +18,20 @@ foreach ($members as $m) {
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
         <h3 style="margin:0;">إدارة الاستحقاقات المالية</h3>
         <div style="display:flex; gap:10px;">
+             <div class="sm-actions-dropdown" style="position:relative; display:inline-block;">
+                <button class="sm-btn" style="background: #2c3e50; width: auto;"><span class="dashicons dashicons-media-spreadsheet"></span> تقارير الاستحقاقات <span class="dashicons dashicons-arrow-down-alt2" style="font-size: 10px;"></span></button>
+                <div class="sm-actions-content" style="left:0; right:auto;">
+                    <a href="<?php echo admin_url('admin-ajax.php?action=sm_export_finance_report&type=overdue_membership'); ?>" target="_blank" class="sm-action-item">
+                        <span class="dashicons dashicons-id"></span> متأخرات العضوية
+                    </a>
+                    <a href="<?php echo admin_url('admin-ajax.php?action=sm_export_finance_report&type=unpaid_fines'); ?>" target="_blank" class="sm-action-item">
+                        <span class="dashicons dashicons-warning"></span> الغرامات غير المسددة
+                    </a>
+                    <a href="<?php echo admin_url('admin-ajax.php?action=sm_export_finance_report&type=full_liabilities'); ?>" target="_blank" class="sm-action-item">
+                        <span class="dashicons dashicons-calculator"></span> تقرير المديونيات الشامل
+                    </a>
+                </div>
+             </div>
              <button onclick="location.reload()" class="sm-btn sm-btn-outline" style="width:auto;"><span class="dashicons dashicons-update"></span> تحديث البيانات</button>
         </div>
     </div>
