@@ -140,10 +140,37 @@ class SM_Settings {
 
     public static function get_specializations() {
         $default = array(
-            'injuries' => 'إصابات وتأهيل',
-            'massage' => 'تدليك رياضي',
-            'nutrition' => 'تغذية رياضية',
-            'special_needs' => 'تأهيل ذوي الاحتياجات الخاصة'
+            'fisiologia' => 'فيسيولوجيا الرياضة',
+            'tarweeh' => 'الترويح الرياضي',
+            'aquatic' => 'الرياضات المائية',
+            'team_sports' => 'الألعاب الجماعية',
+            'combat' => 'المنازلات',
+            'sports_injuries' => 'الإصابات الرياضية والتأهيل',
+            'sports_therapy' => 'العلاج الرياضي',
+            'sports_nutrition' => 'التغذية الرياضية',
+            'biomechanics' => 'الميكانيكا الحيوية',
+            'rehab_fisiologia' => 'فيسيولوجيا التأهيل',
+            'teaching_methods' => 'طرق تدريس التربية الرياضية',
+            'sports_psychology' => 'علم النفس الرياضي',
+            'measurement' => 'القياس والتقويم الرياضي',
+            'kinesiology' => 'علم الحركة',
+            'sports_health' => 'الصحة الرياضية',
+            'injuries_rehab' => 'الإصابات والتأهيل',
+            'physical_prep' => 'الإعداد البدني',
+            'sports_media' => 'الإعلام الرياضي',
+            'fitness' => 'اللياقة البدنية',
+            'sports_training_spec' => 'تدريب رياضي تخصص',
+            'gymnastics' => 'الجمباز والتعبير الحركي',
+            'admin_tarweeh' => 'الإدارة والترويح',
+            'motor_rehab' => 'الإصابات والتأهيل الحركي',
+            'health_science' => 'علوم الصحة الرياضية',
+            'bioscience' => 'العلوم الحيوية',
+            'health_bioscience' => 'العلوم الحيوية والصحة الرياضية',
+            'sports_training' => 'تدريب رياضي',
+            'motor_science' => 'علم حركة',
+            'health_fitness' => 'اللياقة البدنية والصحية',
+            'sports_edu' => 'التعليم الرياضي',
+            'physical_activity' => 'النشاط البدني'
         );
         return get_option('sm_specializations', $default);
     }
@@ -152,9 +179,87 @@ class SM_Settings {
         update_option('sm_specializations', $specs);
     }
 
+    public static function get_universities() {
+        $default = array(
+            'cairo' => 'جامعة القاهرة',
+            'alexandria' => 'جامعة الإسكندرية',
+            'mansoura' => 'جامعة المنصورة',
+            'tanta' => 'جامعة طنطا',
+            'ain_shams' => 'جامعة عين شمس',
+            'asyut' => 'جامعة أسيوط',
+            'zagazig' => 'جامعة الزقازيق',
+            'capital' => 'جامعة العاصمة',
+            'minya' => 'جامعة المنيا',
+            'menofia' => 'جامعة المنوفية',
+            'suez_canal' => 'جامعة قناة السويس',
+            'qena' => 'جامعة قنا',
+            'beni_suef' => 'جامعة بني سويف',
+            'fayoum' => 'جامعة الفيوم',
+            'banha' => 'جامعة بنها',
+            'kafr_el_sheikh' => 'جامعة كفر الشيخ',
+            'sohag' => 'جامعة سوهاج',
+            'port_said' => 'جامعة بورسعيد',
+            'aswan' => 'جامعة أسوان',
+            'damietta' => 'جامعة دمياط',
+            'damanhour' => 'جامعة دمنهور',
+            'suez' => 'جامعة السويس',
+            'sadat' => 'جامعة مدينة السادات',
+            'arish' => 'جامعة العريش',
+            'luxor' => 'جامعة الأقصر',
+            'new_valley' => 'جامعة الوادي الجديد',
+            'matrouh' => 'جامعة مطروح',
+            'hurghada' => 'جامعة الغردقة'
+        );
+        return get_option('sm_universities', $default);
+    }
+
+    public static function save_universities($data) {
+        update_option('sm_universities', $data);
+    }
+
+    public static function get_faculties() {
+        $default = array(
+            'sports_science' => 'كلية علوم الرياضة',
+            'physical_edu' => 'كلية التربية الرياضية',
+            'rehab_sports' => 'كلية علوم الرياضة والتأهيل',
+            'physical_sports' => 'كلية التربية البدنية وعلوم الرياضة',
+            'disability_rehab' => 'كلية علوم الإعاقة والتأهيل'
+        );
+        return get_option('sm_faculties', $default);
+    }
+
+    public static function save_faculties($data) {
+        update_option('sm_faculties', $data);
+    }
+
+    public static function get_departments() {
+        $default = array(
+            'health_science' => 'قسم علوم الصحة الرياضية',
+            'psychology' => 'قسم علم النفس الرياضي',
+            'health' => 'قسم الصحة الرياضية',
+            'physiology' => 'قسم فيسيولوجيا الرياضة',
+            'kinesiology' => 'قسم علوم الحركة الرياضية',
+            'nutrition' => 'قسم التغذية الرياضية',
+            'training' => 'قسم التدريب الرياضي وعلومه',
+            'tarweeh' => 'قسم الترويح الرياضي',
+            'performance' => 'قسم اللياقة البدنية وعلوم الأداء',
+            'health_bioscience' => 'قسم العلوم الحيوية والصحة الرياضية',
+            'curriculum' => 'قسم المناهج وطرق التدريس',
+            'admin' => 'قسم الإدارة الرياضية',
+            'therapy' => 'قسم العلاج الرياضي',
+            'injuries' => 'قسم الإصابات والتأهيل'
+        );
+        return get_option('sm_departments', $default);
+    }
+
+    public static function save_departments($data) {
+        update_option('sm_departments', $data);
+    }
+
     public static function get_academic_degrees() {
         return array(
             'bachelor' => 'بكالوريوس',
+            'high_diploma' => 'دبلومات عليا',
             'master' => 'ماجستير',
             'doctorate' => 'دكتوراه'
         );

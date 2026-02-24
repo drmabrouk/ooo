@@ -83,6 +83,24 @@ class SM_Finance {
         // 3. Facility License Dues - Automatic renewal calculation REMOVED as requested.
         // It should only be applied if explicitly requested or handled via another mechanism.
 
+        // 4. Digital Services Fees (Approved Requests)
+        $service_fees = $wpdb->get_results($wpdb->prepare(
+            "SELECT r.fees_paid, s.name as service_name
+             FROM {$wpdb->prefix}sm_service_requests r
+             JOIN {$wpdb->prefix}sm_services s ON r.service_id = s.id
+             WHERE r.member_id = %d AND r.status = 'approved' AND r.fees_paid > 0",
+            $member_id
+        ));
+        foreach ($service_fees as $sf) {
+            $total_owed += (float)$sf->fees_paid;
+            $breakdown[] = [
+                'item' => "رسوم خدمة: " . $sf->service_name,
+                'amount' => (float)$sf->fees_paid,
+                'penalty' => 0,
+                'total' => (float)$sf->fees_paid
+            ];
+        }
+
         // Subtract existing payments from total
         $total_paid = self::get_total_paid($member_id);
         $final_balance = $total_owed - $total_paid;

@@ -4,6 +4,9 @@ global $wpdb;
 // Fetch all non-approved/non-rejected requests
 $requests = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}sm_membership_requests WHERE status NOT IN ('approved', 'rejected') ORDER BY created_at DESC");
 $govs = SM_Settings::get_governorates();
+$univs = SM_Settings::get_universities();
+$facs = SM_Settings::get_faculties();
+$depts = SM_Settings::get_departments();
 ?>
 <div class="sm-content-wrapper" dir="rtl">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
@@ -41,8 +44,8 @@ $govs = SM_Settings::get_governorates();
                                 </div>
                             </td>
                             <td>
-                                <div style="font-size: 12px; font-weight: 600;"><?php echo esc_html($r->university); ?></div>
-                                <div style="font-size: 11px; color: #64748b;"><?php echo esc_html($r->faculty); ?> - <?php echo esc_html($r->department); ?></div>
+                                <div style="font-size: 12px; font-weight: 600;"><?php echo esc_html($univs[$r->university] ?? $r->university); ?></div>
+                                <div style="font-size: 11px; color: #64748b;"><?php echo esc_html($facs[$r->faculty] ?? $r->faculty); ?> - <?php echo esc_html($depts[$r->department] ?? $r->department); ?></div>
                                 <div style="font-size: 11px; color: #94a3b8;"><?php echo esc_html($r->graduation_date); ?></div>
                             </td>
                             <td>

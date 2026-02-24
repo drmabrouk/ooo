@@ -109,14 +109,20 @@ $acc_status = SM_Finance::get_member_status($member->id);
                     <div><label class="sm-label">البريد الإلكتروني:</label> <div class="sm-value"><?php echo esc_html($member->email); ?></div></div>
                 </div>
 
+                <?php
+                $univs = SM_Settings::get_universities();
+                $facs = SM_Settings::get_faculties();
+                $depts = SM_Settings::get_departments();
+                $degrees = SM_Settings::get_academic_degrees();
+                ?>
                 <h4 style="margin: 20px 0 10px 0; color: var(--sm-primary-color);">البيانات الأكاديمية</h4>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                    <div><label class="sm-label">الجامعة:</label> <div class="sm-value"><?php echo esc_html($member->university); ?></div></div>
-                    <div><label class="sm-label">الكلية:</label> <div class="sm-value"><?php echo esc_html($member->faculty); ?></div></div>
-                    <div><label class="sm-label">القسم:</label> <div class="sm-value"><?php echo esc_html($member->department); ?></div></div>
+                    <div><label class="sm-label">الجامعة:</label> <div class="sm-value"><?php echo esc_html($univs[$member->university] ?? $member->university); ?></div></div>
+                    <div><label class="sm-label">الكلية:</label> <div class="sm-value"><?php echo esc_html($facs[$member->faculty] ?? $member->faculty); ?></div></div>
+                    <div><label class="sm-label">القسم:</label> <div class="sm-value"><?php echo esc_html($depts[$member->department] ?? $member->department); ?></div></div>
                     <div><label class="sm-label">تاريخ التخرج:</label> <div class="sm-value"><?php echo esc_html($member->graduation_date); ?></div></div>
                     <div><label class="sm-label">التخصص:</label> <div class="sm-value"><?php echo esc_html($specs[$member->specialization] ?? $member->specialization); ?></div></div>
-                    <div><label class="sm-label">الدرجة العلمية:</label> <div class="sm-value"><?php echo esc_html($member->academic_degree); ?></div></div>
+                    <div><label class="sm-label">الدرجة العلمية:</label> <div class="sm-value"><?php echo esc_html($degrees[$member->academic_degree] ?? $member->academic_degree); ?></div></div>
                 </div>
 
                 <h4 style="margin: 20px 0 10px 0; color: var(--sm-primary-color);">بيانات السكن والاتصال</h4>
@@ -139,8 +145,8 @@ $acc_status = SM_Finance::get_member_status($member->id);
 
             <!-- Professional Permits Section -->
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                <!-- Practice License Card -->
-                <div class="sm-license-card" style="background: #fff; border-radius: 12px; border: 1px solid var(--sm-border-color); overflow: hidden; box-shadow: var(--sm-shadow);">
+                <!-- Practice Permit Card -->
+                <div class="sm-license-card" style="background: #fff; border-radius: 12px; border: 1px solid var(--sm-border-color); overflow: hidden; box-shadow: var(--sm-shadow); display: flex; flex-direction: column;">
                     <div style="background: var(--sm-primary-color); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; color: #fff;">
                         <h4 style="margin: 0; font-weight: 800;"><span class="dashicons dashicons-id-alt" style="vertical-align: middle;"></span> تصريح مزاولة المهنة</h4>
                         <?php
@@ -152,11 +158,11 @@ $acc_status = SM_Finance::get_member_status($member->id);
                             <?php echo empty($member->license_number) ? 'غير مسجل' : ($lic_valid ? 'ساري' : 'منتهي'); ?>
                         </span>
                     </div>
-                    <div style="padding: 20px;">
+                    <div style="padding: 20px; flex: 1;">
                         <?php if (empty($member->license_number)): ?>
                             <div style="text-align: center; color: #94a3b8; padding: 20px;">
                                 <span class="dashicons dashicons-warning" style="font-size: 32px; width: 32px; height: 32px;"></span>
-                                <p style="margin-top: 10px; font-weight: 700;">غير مقيد بسجل تصاريح المزاولة</p>
+                                <p style="margin-top: 10px; font-weight: 700;">غير مقيد / ليس في سجلات التصاريح</p>
                             </div>
                         <?php else: ?>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
@@ -182,10 +188,21 @@ $acc_status = SM_Finance::get_member_status($member->id);
                             </div>
                         <?php endif; ?>
                     </div>
+                    <div style="padding: 15px 20px; background: #f8fafc; border-top: 1px solid #eee;">
+                        <div class="sm-dropdown" style="position:relative; width: 100%;">
+                            <button onclick="smToggleCardOptions('permit-options')" class="sm-btn sm-btn-outline" style="width: 100%; font-size: 12px; justify-content: space-between;">
+                                خيارات الطلبات <span class="dashicons dashicons-arrow-down-alt2"></span>
+                            </button>
+                            <div id="permit-options" class="sm-dropdown-menu" style="display:none; position:absolute; bottom:100%; right:0; width:100%; background:white; border:1px solid #eee; border-radius:8px; box-shadow:0 -10px 25px rgba(0,0,0,0.1); z-index:10;">
+                                <a href="javascript:smRequestPermitTest(<?php echo $member->id; ?>)" class="sm-dropdown-item"><span class="dashicons dashicons-welcome-learn-more"></span> طلب اختبار تصريح مزاولة</a>
+                                <a href="javascript:smRequestPermitRenewal(<?php echo $member->id; ?>)" class="sm-dropdown-item"><span class="dashicons dashicons-update"></span> طلب تجديد تصريح</a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Facility License Card -->
-                <div class="sm-license-card" style="background: #fff; border-radius: 12px; border: 1px solid var(--sm-border-color); overflow: hidden; box-shadow: var(--sm-shadow);">
+                <!-- Establishment License Card -->
+                <div class="sm-license-card" style="background: #fff; border-radius: 12px; border: 1px solid var(--sm-border-color); overflow: hidden; box-shadow: var(--sm-shadow); display: flex; flex-direction: column;">
                     <div style="background: #2c3e50; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; color: #fff;">
                         <h4 style="margin: 0; font-weight: 800;"><span class="dashicons dashicons-building" style="vertical-align: middle;"></span> ترخيص المنشأة</h4>
                         <?php
@@ -197,11 +214,11 @@ $acc_status = SM_Finance::get_member_status($member->id);
                             <?php echo empty($member->facility_number) ? 'غير مسجل' : ($fac_valid ? 'ساري' : 'منتهي'); ?>
                         </span>
                     </div>
-                    <div style="padding: 20px;">
+                    <div style="padding: 20px; flex: 1;">
                         <?php if (empty($member->facility_number)): ?>
                             <div style="text-align: center; color: #94a3b8; padding: 20px;">
                                 <span class="dashicons dashicons-building" style="font-size: 32px; width: 32px; height: 32px;"></span>
-                                <p style="margin-top: 10px; font-weight: 700;">لم يتم تسجيل منشأة لهذا العضو</p>
+                                <p style="margin-top: 10px; font-weight: 700;">لا توجد منشأة مسجلة</p>
                             </div>
                         <?php else: ?>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
@@ -219,6 +236,23 @@ $acc_status = SM_Finance::get_member_status($member->id);
                                 <?php if (current_user_can('sm_print_reports')): ?>
                                     <a href="<?php echo admin_url('admin-ajax.php?action=sm_print_facility&member_id='.$member->id); ?>" target="_blank" class="sm-btn sm-btn-outline" style="height: 32px; font-size: 11px; width: auto;"><span class="dashicons dashicons-printer"></span> طباعة الترخيص</a>
                                 <?php endif; ?>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                    <div style="padding: 15px 20px; background: #f8fafc; border-top: 1px solid #eee;">
+                        <?php if (!empty($member->license_number) && $lic_valid): ?>
+                            <div class="sm-dropdown" style="position:relative; width: 100%;">
+                                <button onclick="smToggleCardOptions('fac-options')" class="sm-btn sm-btn-outline" style="width: 100%; font-size: 12px; justify-content: space-between;">
+                                    خيارات الطلبات <span class="dashicons dashicons-arrow-down-alt2"></span>
+                                </button>
+                                <div id="fac-options" class="sm-dropdown-menu" style="display:none; position:absolute; bottom:100%; right:0; width:100%; background:white; border:1px solid #eee; border-radius:8px; box-shadow:0 -10px 25px rgba(0,0,0,0.1); z-index:10;">
+                                    <a href="javascript:smRequestFacilityLicense(<?php echo $member->id; ?>)" class="sm-dropdown-item"><span class="dashicons dashicons-plus"></span> طلب ترخيص منشأة جديدة</a>
+                                    <a href="javascript:smRequestFacilityRenewal(<?php echo $member->id; ?>)" class="sm-dropdown-item"><span class="dashicons dashicons-update"></span> طلب تجديد ترخيص منشأة</a>
+                                </div>
+                            </div>
+                        <?php else: ?>
+                            <div style="font-size: 11px; color: #718096; text-align: center; font-style: italic;">
+                                يتطلب تصريح مزاولة ساري لطلب ترخيص منشأة
                             </div>
                         <?php endif; ?>
                     </div>
@@ -280,19 +314,16 @@ $acc_status = SM_Finance::get_member_status($member->id);
                     <div class="sm-form-group"><label class="sm-label">الرقم القومي:</label><input name="national_id" id="edit_national_id" type="text" class="sm-input" required maxlength="14"></div>
                     <div class="sm-form-group"><label class="sm-label">الدرجة الوظيفية:</label><select name="professional_grade" id="edit_grade" class="sm-select"><?php foreach (SM_Settings::get_professional_grades() as $k => $v) echo "<option value='$k'>$v</option>"; ?></select></div>
 
-                    <div class="sm-form-group"><label class="sm-label">الجامعة:</label><input name="university" id="edit_university" type="text" class="sm-input"></div>
-                    <div class="sm-form-group"><label class="sm-label">الكلية:</label><input name="faculty" id="edit_faculty" type="text" class="sm-input"></div>
-                    <div class="sm-form-group"><label class="sm-label">القسم:</label><input name="department" id="edit_department" type="text" class="sm-input"></div>
+                    <div class="sm-form-group"><label class="sm-label">الجامعة:</label><select name="university" id="edit_university" class="sm-select edit-cascading"><?php foreach (SM_Settings::get_universities() as $k=>$v) echo "<option value='$k'>$v</option>"; ?></select></div>
+                    <div class="sm-form-group"><label class="sm-label">الكلية:</label><select name="faculty" id="edit_faculty" class="sm-select edit-cascading"><?php foreach (SM_Settings::get_faculties() as $k=>$v) echo "<option value='$k'>$v</option>"; ?></select></div>
+                    <div class="sm-form-group"><label class="sm-label">القسم:</label><select name="department" id="edit_department" class="sm-select edit-cascading"><?php foreach (SM_Settings::get_departments() as $k=>$v) echo "<option value='$k'>$v</option>"; ?></select></div>
                     <div class="sm-form-group"><label class="sm-label">تاريخ التخرج:</label><input name="graduation_date" id="edit_grad_date" type="date" class="sm-input"></div>
                     <div class="sm-form-group"><label class="sm-label">الدرجة العلمية:</label>
                         <select name="academic_degree" id="edit_degree" class="sm-select">
-                            <option value="بكالوريوس">بكالوريوس</option>
-                            <option value="دبلومات عليا">دبلومات عليا</option>
-                            <option value="ماجستير">ماجستير</option>
-                            <option value="دكتوراه">دكتوراه</option>
+                            <?php foreach(SM_Settings::get_academic_degrees() as $k=>$v) echo "<option value='$k'>$v</option>"; ?>
                         </select>
                     </div>
-                    <div class="sm-form-group"><label class="sm-label">التخصص:</label><select name="specialization" id="edit_spec" class="sm-select"><?php foreach (SM_Settings::get_specializations() as $k => $v) echo "<option value='$k'>$v</option>"; ?></select></div>
+                    <div class="sm-form-group"><label class="sm-label">التخصص:</label><select name="specialization" id="edit_spec" class="sm-select edit-cascading"><?php foreach (SM_Settings::get_specializations() as $k => $v) echo "<option value='$k'>$v</option>"; ?></select></div>
 
                     <div class="sm-form-group"><label class="sm-label">محافظة السكن:</label><select name="residence_governorate" id="edit_res_gov" class="sm-select"><?php foreach (SM_Settings::get_governorates() as $k => $v) echo "<option value='$k'>$v</option>"; ?></select></div>
                     <div class="sm-form-group"><label class="sm-label">المدينة / المركز:</label><input name="residence_city" id="edit_res_city" type="text" class="sm-input"></div>
@@ -325,19 +356,16 @@ $acc_status = SM_Finance::get_member_status($member->id);
                     <div class="sm-form-group"><label class="sm-label">الاسم الكامل:</label><input type="text" name="name" class="sm-input" value="<?php echo esc_attr($member->name); ?>" required></div>
                     <div class="sm-form-group"><label class="sm-label">الرقم القومي:</label><input type="text" name="national_id" class="sm-input" value="<?php echo esc_attr($member->national_id); ?>" required maxlength="14"></div>
 
-                    <div class="sm-form-group"><label class="sm-label">الجامعة:</label><input name="university" type="text" class="sm-input" value="<?php echo esc_attr($member->university); ?>"></div>
-                    <div class="sm-form-group"><label class="sm-label">الكلية:</label><input name="faculty" type="text" class="sm-input" value="<?php echo esc_attr($member->faculty); ?>"></div>
-                    <div class="sm-form-group"><label class="sm-label">القسم:</label><input name="department" type="text" class="sm-input" value="<?php echo esc_attr($member->department); ?>"></div>
+                    <div class="sm-form-group"><label class="sm-label">الجامعة:</label><select name="university" class="sm-select academic-cascading"><?php foreach(SM_Settings::get_universities() as $k=>$v) echo "<option value='$k' ".selected($member->university, $k, false).">$v</option>"; ?></select></div>
+                    <div class="sm-form-group"><label class="sm-label">الكلية:</label><select name="faculty" class="sm-select academic-cascading"><?php foreach(SM_Settings::get_faculties() as $k=>$v) echo "<option value='$k' ".selected($member->faculty, $k, false).">$v</option>"; ?></select></div>
+                    <div class="sm-form-group"><label class="sm-label">القسم:</label><select name="department" class="sm-select academic-cascading"><?php foreach(SM_Settings::get_departments() as $k=>$v) echo "<option value='$k' ".selected($member->department, $k, false).">$v</option>"; ?></select></div>
                     <div class="sm-form-group"><label class="sm-label">تاريخ التخرج:</label><input name="graduation_date" type="date" class="sm-input" value="<?php echo esc_attr($member->graduation_date); ?>"></div>
                     <div class="sm-form-group"><label class="sm-label">الدرجة العلمية:</label>
                         <select name="academic_degree" class="sm-select">
-                            <option value="بكالوريوس" <?php selected($member->academic_degree, 'بكالوريوس'); ?>>بكالوريوس</option>
-                            <option value="دبلومات عليا" <?php selected($member->academic_degree, 'دبلومات عليا'); ?>>دبلومات عليا</option>
-                            <option value="ماجستير" <?php selected($member->academic_degree, 'ماجستير'); ?>>ماجستير</option>
-                            <option value="دكتوراه" <?php selected($member->academic_degree, 'دكتوراه'); ?>>دكتوراه</option>
+                            <?php foreach(SM_Settings::get_academic_degrees() as $k=>$v) echo "<option value='$k' ".selected($member->academic_degree, $k, false).">$v</option>"; ?>
                         </select>
                     </div>
-                    <div class="sm-form-group"><label class="sm-label">التخصص:</label><select name="specialization" class="sm-select"><?php foreach ($specs as $k => $v) echo "<option value='$k' ".selected($member->specialization, $k, false).">$v</option>"; ?></select></div>
+                    <div class="sm-form-group"><label class="sm-label">التخصص:</label><select name="specialization" class="sm-select academic-cascading"><?php foreach ($specs as $k => $v) echo "<option value='$k' ".selected($member->specialization, $k, false).">$v</option>"; ?></select></div>
 
                     <div class="sm-form-group"><label class="sm-label">محافظة السكن:</label><select name="residence_governorate" class="sm-select"><?php foreach ($govs as $k => $v) echo "<option value='$k' ".selected($member->residence_governorate, $k, false).">$v</option>"; ?></select></div>
                     <div class="sm-form-group"><label class="sm-label">المدينة / المركز:</label><input name="residence_city" type="text" class="sm-input" value="<?php echo esc_attr($member->residence_city); ?>"></div>
@@ -361,6 +389,40 @@ function smToggleFinanceDropdown() {
     const el = document.getElementById('sm-finance-dropdown');
     el.style.display = el.style.display === 'none' ? 'block' : 'none';
 }
+
+function smToggleCardOptions(id) {
+    const el = document.getElementById(id);
+    const all = document.querySelectorAll('.sm-dropdown-menu');
+    all.forEach(m => { if(m.id !== id) m.style.display = 'none'; });
+    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+function smSubmitProfRequest(type, memberId) {
+    if (!confirm('هل أنت متأكد من إرسال هذا الطلب؟')) return;
+
+    const fd = new FormData();
+    fd.append('action', 'sm_submit_professional_request');
+    fd.append('member_id', memberId);
+    fd.append('request_type', type);
+    fd.append('nonce', '<?php echo wp_create_nonce("sm_professional_action"); ?>');
+
+    fetch('<?php echo admin_url('admin-ajax.php'); ?>', { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(res => {
+        if (res.success) {
+            smShowNotification('تم إرسال الطلب بنجاح. سيظهر في تبويب الطلبات لدى الإدارة.');
+            const menus = document.querySelectorAll('.sm-dropdown-menu');
+            menus.forEach(m => m.style.display = 'none');
+        } else {
+            alert('خطأ: ' + res.data);
+        }
+    });
+}
+
+function smRequestPermitTest(mid) { smSubmitProfRequest('permit_test', mid); }
+function smRequestPermitRenewal(mid) { smSubmitProfRequest('permit_renewal', mid); }
+function smRequestFacilityLicense(mid) { smSubmitProfRequest('facility_new', mid); }
+function smRequestFacilityRenewal(mid) { smSubmitProfRequest('facility_renewal', mid); }
 
 function smTriggerPhotoUpload() {
     document.getElementById('member-photo-input').click();
@@ -437,8 +499,8 @@ window.editSmMember = function(s) {
     document.getElementById('edit_faculty').value = s.faculty || '';
     document.getElementById('edit_department').value = s.department || '';
     document.getElementById('edit_grad_date').value = s.graduation_date || '';
-    document.getElementById('edit_degree').value = s.academic_degree || 'بكالوريوس';
-    document.getElementById('edit_spec').value = s.specialization;
+    document.getElementById('edit_degree').value = s.academic_degree || '';
+    document.getElementById('edit_spec').value = s.specialization || '';
     document.getElementById('edit_res_gov').value = s.residence_governorate || '';
     document.getElementById('edit_res_city').value = s.residence_city || '';
     document.getElementById('edit_res_street').value = s.residence_street || '';
@@ -446,8 +508,35 @@ window.editSmMember = function(s) {
     document.getElementById('edit_phone').value = s.phone;
     document.getElementById('edit_email').value = s.email;
     document.getElementById('edit_notes').value = s.notes || '';
+
+    // Enable cascading fields if values exist
+    const fac = document.getElementById('edit_faculty');
+    const dept = document.getElementById('edit_department');
+    const spec = document.getElementById('edit_spec');
+    if (s.university) fac.disabled = false;
+    if (s.faculty) dept.disabled = false;
+    if (s.department) spec.disabled = false;
+
     document.getElementById('edit-member-modal').style.display = 'flex';
 };
+
+const applyCascading = (selector) => {
+    const elements = document.querySelectorAll(selector);
+    elements.forEach((el, idx) => {
+        el.addEventListener("change", function() {
+            if (this.value && idx < elements.length - 1) {
+                elements[idx + 1].disabled = false;
+            } else if (!this.value) {
+                for (let i = idx + 1; i < elements.length; i++) {
+                    elements[i].value = "";
+                    elements[i].disabled = true;
+                }
+            }
+        });
+    });
+};
+applyCascading("#edit-member-form .edit-cascading");
+applyCascading("#member-update-request-form .academic-cascading");
 
 document.getElementById('edit-member-form').onsubmit = function(e) {
     e.preventDefault();

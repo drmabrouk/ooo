@@ -178,8 +178,13 @@ if ($import_results) {
                     <div class="sm-form-group"><label class="sm-label">الرقم القومي:</label><input name="national_id" type="text" class="sm-input" required maxlength="14"></div>
                     <div class="sm-form-group"><label class="sm-label">الاسم الكامل:</label><input name="name" type="text" class="sm-input" required></div>
                     <div class="sm-form-group"><label class="sm-label">الدرجة الوظيفية:</label><select name="professional_grade" class="sm-select"><?php foreach (SM_Settings::get_professional_grades() as $k => $v) echo "<option value='$k'>$v</option>"; ?></select></div>
-                    <div class="sm-form-group"><label class="sm-label">التخصص:</label><select name="specialization" class="sm-select"><?php foreach (SM_Settings::get_specializations() as $k => $v) echo "<option value='$k'>$v</option>"; ?></select></div>
-                    <div class="sm-form-group"><label class="sm-label">المؤهل العلمي:</label><select name="academic_degree" class="sm-select"><?php foreach (SM_Settings::get_academic_degrees() as $k => $v) echo "<option value='$k'>$v</option>"; ?></select></div>
+
+                    <div class="sm-form-group"><label class="sm-label">الجامعة:</label><select name="university" class="sm-select add-cascading" required><option value="">-- اختر الجامعة --</option><?php foreach(SM_Settings::get_universities() as $k=>$v) echo "<option value='$k'>$v</option>"; ?></select></div>
+                    <div class="sm-form-group"><label class="sm-label">الكلية:</label><select name="faculty" class="sm-select add-cascading" required disabled><option value="">-- اختر الكلية --</option><?php foreach(SM_Settings::get_faculties() as $k=>$v) echo "<option value='$k'>$v</option>"; ?></select></div>
+                    <div class="sm-form-group"><label class="sm-label">القسم:</label><select name="department" class="sm-select add-cascading" required disabled><option value="">-- اختر القسم --</option><?php foreach(SM_Settings::get_departments() as $k=>$v) echo "<option value='$k'>$v</option>"; ?></select></div>
+                    <div class="sm-form-group"><label class="sm-label">التخصص:</label><select name="specialization" class="sm-select add-cascading" required disabled><option value="">-- اختر التخصص --</option><?php foreach (SM_Settings::get_specializations() as $k => $v) echo "<option value='$k'>$v</option>"; ?></select></div>
+
+                    <div class="sm-form-group"><label class="sm-label">الدرجة العلمية:</label><select name="academic_degree" class="sm-select"><?php foreach (SM_Settings::get_academic_degrees() as $k => $v) echo "<option value='$k'>$v</option>"; ?></select></div>
                     <div class="sm-form-group"><label class="sm-label">المحافظة:</label><select name="governorate" class="sm-select"><option value="">-- اختر المحافظة --</option><?php foreach (SM_Settings::get_governorates() as $k => $v) echo "<option value='$k'>$v</option>"; ?></select></div>
                     <div class="sm-form-group"><label class="sm-label">رقم العضوية:</label><input name="membership_number" type="text" class="sm-input"></div>
                     <div class="sm-form-group"><label class="sm-label">تاريخ بدء العضوية:</label><input name="membership_start_date" id="add_mem_start" type="date" class="sm-input" onchange="smCalculateDateExpiry('add_mem_start', 'add_mem_expiry')"></div>
@@ -199,8 +204,13 @@ if ($import_results) {
                 <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; padding:20px;">
                     <div class="sm-form-group"><label class="sm-label">الاسم الكامل:</label><input name="name" id="edit_name" type="text" class="sm-input" required></div>
                     <div class="sm-form-group"><label class="sm-label">الدرجة الوظيفية:</label><select name="professional_grade" id="edit_grade" class="sm-select"><?php foreach (SM_Settings::get_professional_grades() as $k => $v) echo "<option value='$k'>$v</option>"; ?></select></div>
-                    <div class="sm-form-group"><label class="sm-label">التخصص:</label><select name="specialization" id="edit_spec" class="sm-select"><?php foreach (SM_Settings::get_specializations() as $k => $v) echo "<option value='$k'>$v</option>"; ?></select></div>
-                    <div class="sm-form-group"><label class="sm-label">المؤهل العلمي:</label><select name="academic_degree" id="edit_degree" class="sm-select"><?php foreach (SM_Settings::get_academic_degrees() as $k => $v) echo "<option value='$k'>$v</option>"; ?></select></div>
+
+                    <div class="sm-form-group"><label class="sm-label">الجامعة:</label><select name="university" id="edit_university" class="sm-select edit-cascading"><?php foreach(SM_Settings::get_universities() as $k=>$v) echo "<option value='$k'>$v</option>"; ?></select></div>
+                    <div class="sm-form-group"><label class="sm-label">الكلية:</label><select name="faculty" id="edit_faculty" class="sm-select edit-cascading"><?php foreach(SM_Settings::get_faculties() as $k=>$v) echo "<option value='$k'>$v</option>"; ?></select></div>
+                    <div class="sm-form-group"><label class="sm-label">القسم:</label><select name="department" id="edit_department" class="sm-select edit-cascading"><?php foreach(SM_Settings::get_departments() as $k=>$v) echo "<option value='$k'>$v</option>"; ?></select></div>
+                    <div class="sm-form-group"><label class="sm-label">التخصص:</label><select name="specialization" id="edit_spec" class="sm-select edit-cascading"><?php foreach (SM_Settings::get_specializations() as $k => $v) echo "<option value='$k'>$v</option>"; ?></select></div>
+
+                    <div class="sm-form-group"><label class="sm-label">الدرجة العلمية:</label><select name="academic_degree" id="edit_degree" class="sm-select"><?php foreach (SM_Settings::get_academic_degrees() as $k => $v) echo "<option value='$k'>$v</option>"; ?></select></div>
                     <div class="sm-form-group"><label class="sm-label">المحافظة:</label><select name="governorate" id="edit_gov" class="sm-select"><?php foreach (SM_Settings::get_governorates() as $k => $v) echo "<option value='$k'>$v</option>"; ?></select></div>
                     <div class="sm-form-group"><label class="sm-label">تاريخ بدء العضوية:</label><input name="membership_start_date" id="edit_mem_start_input" type="date" class="sm-input" onchange="smCalculateDateExpiry('edit_mem_start_input', 'edit_mem_expiry_input')"></div>
                     <div class="sm-form-group"><label class="sm-label">تاريخ انتهاء العضوية:</label><input name="membership_expiration_date" id="edit_mem_expiry_input" type="date" class="sm-input"></div>
@@ -264,13 +274,43 @@ if ($import_results) {
             document.getElementById('edit_member_id_hidden').value = s.id;
             document.getElementById('edit_name').value = s.name;
             document.getElementById('edit_grade').value = s.professional_grade;
-            document.getElementById('edit_spec').value = s.specialization;
-            document.getElementById('edit_degree').value = s.academic_degree;
+            document.getElementById('edit_university').value = s.university || "";
+            document.getElementById('edit_faculty').value = s.faculty || "";
+            document.getElementById('edit_department').value = s.department || "";
+            document.getElementById('edit_spec').value = s.specialization || "";
+            document.getElementById('edit_degree').value = s.academic_degree || "";
             document.getElementById('edit_gov').value = s.governorate;
             document.getElementById('edit_mem_start_input').value = s.membership_start_date;
             document.getElementById('edit_mem_expiry_input').value = s.membership_expiration_date;
+
+            // Enable cascading fields if values exist
+            const fac = document.getElementById('edit_faculty');
+            const dept = document.getElementById('edit_department');
+            const spec = document.getElementById('edit_spec');
+            if (s.university) fac.disabled = false;
+            if (s.faculty) dept.disabled = false;
+            if (s.department) spec.disabled = false;
+
             document.getElementById('edit-member-modal').style.display = 'flex';
         };
+
+        const applyCascading = (selector) => {
+            const elements = document.querySelectorAll(selector);
+            elements.forEach((el, idx) => {
+                el.addEventListener("change", function() {
+                    if (this.value && idx < elements.length - 1) {
+                        elements[idx + 1].disabled = false;
+                    } else if (!this.value) {
+                        for (let i = idx + 1; i < elements.length; i++) {
+                            elements[i].value = "";
+                            elements[i].disabled = true;
+                        }
+                    }
+                });
+            });
+        };
+        applyCascading("#add-member-form .add-cascading");
+        applyCascading("#edit-member-form .edit-cascading");
 
         window.toggleAllMembers = function(master) {
             document.querySelectorAll('.member-checkbox').forEach(cb => cb.checked = master.checked);

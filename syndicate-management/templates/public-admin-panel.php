@@ -353,6 +353,27 @@
         document.getElementById('sm-alert-modal').style.display = 'flex';
     };
 
+    window.smProcessProfRequest = function(id, status) {
+        const notes = prompt('ملاحظات إضافية (اختياري):');
+        if (notes === null) return;
+
+        const fd = new FormData();
+        fd.append('action', 'sm_process_professional_request');
+        fd.append('request_id', id);
+        fd.append('status', status);
+        fd.append('notes', notes);
+        fd.append('nonce', '<?php echo wp_create_nonce("sm_admin_action"); ?>');
+
+        fetch(ajaxurl, { method: 'POST', body: fd })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                smShowNotification('تم تحديث حالة الطلب');
+                location.reload();
+            } else alert('خطأ: ' + res.data);
+        });
+    };
+
     window.smDeleteAlert = function(id) {
         if(!confirm('هل أنت متأكد من حذف هذا التنبيه؟')) return;
         const fd = new FormData();
@@ -411,7 +432,7 @@ $is_officer = $is_syndicate_admin || $is_syndicate_member;
 
 $active_tab = isset($_GET['sm_tab']) ? sanitize_text_field($_GET['sm_tab']) : 'summary';
 $is_restricted = $is_member || $is_syndicate_member;
-if ($is_restricted && !in_array($active_tab, ['my-profile', 'member-profile', 'messaging', 'surveys'])) {
+if ($is_restricted && !in_array($active_tab, ['my-profile', 'member-profile', 'messaging', 'surveys', 'digital-services'])) {
     $active_tab = 'my-profile';
 }
 
@@ -667,7 +688,8 @@ $greeting = ($hour >= 5 && $hour < 12) ? 'صباح الخير' : 'مساء ال�
                         <a href="<?php echo add_query_arg('sm_tab', 'global-settings'); ?>" class="sm-sidebar-link"><span class="dashicons dashicons-admin-generic"></span> إعدادات النظام</a>
                         <ul class="sm-sidebar-dropdown" style="display: <?php echo $active_tab == 'global-settings' ? 'block' : 'none'; ?>;">
                             <li><a href="<?php echo add_query_arg('sm_tab', 'global-settings'); ?>&sub=init" class="<?php echo (!isset($_GET['sub']) || $_GET['sub'] == 'init') ? 'sm-sub-active' : ''; ?>"><span class="dashicons dashicons-admin-tools"></span> تهيئة النظام</a></li>
-                            <li><a href="<?php echo add_query_arg('sm_tab', 'global-settings'); ?>&sub=professional" class="<?php echo ($_GET['sub'] ?? '') == 'professional' ? 'sm-sub-active' : ''; ?>"><span class="dashicons dashicons-businessman"></span> الدرجات والتخصصات</a></li>
+                            <li><a href="<?php echo add_query_arg('sm_tab', 'global-settings'); ?>&sub=professional" class="<?php echo ($_GET['sub'] ?? '') == 'professional' ? 'sm-sub-active' : ''; ?>"><span class="dashicons dashicons-businessman"></span> الدرجات الوظيفية</a></li>
+                            <li><a href="<?php echo add_query_arg('sm_tab', 'global-settings'); ?>&sub=academic" class="<?php echo ($_GET['sub'] ?? '') == 'academic' ? 'sm-sub-active' : ''; ?>"><span class="dashicons dashicons-welcome-learn-more"></span> الحقول الأكاديمية</a></li>
                             <li><a href="<?php echo add_query_arg('sm_tab', 'global-settings'); ?>&sub=finance" class="<?php echo ($_GET['sub'] ?? '') == 'finance' ? 'sm-sub-active' : ''; ?>"><span class="dashicons dashicons-money-alt"></span> الرسوم والغرامات</a></li>
                             <li><a href="<?php echo add_query_arg('sm_tab', 'global-settings'); ?>&sub=notifications" class="<?php echo ($_GET['sub'] ?? '') == 'notifications' ? 'sm-sub-active' : ''; ?>"><span class="dashicons dashicons-email"></span> التنبيهات والبريد</a></li>
                             <li><a href="<?php echo add_query_arg('sm_tab', 'global-settings'); ?>&sub=design" class="<?php echo ($_GET['sub'] ?? '') == 'design' ? 'sm-sub-active' : ''; ?>"><span class="dashicons dashicons-art"></span> التصميم والمظهر</a></li>
@@ -758,8 +780,11 @@ $greeting = ($hour >= 5 && $hour < 12) ? 'صباح الخير' : 'مساء ال�
                     if ($is_admin || $is_sys_admin || $is_syndicate_admin) {
                         include SM_PLUGIN_DIR . 'templates/admin-surveys.php';
                     } elseif ($is_syndicate_member || $is_member) {
-                        // Members see only active surveys to participate
+                        echo '<div class="sm-member-surveys-view" style="background:#fff; padding:30px; border-radius:12px; border:1px solid #e2e8f0; min-height:400px;">';
+                        echo '<h2 style="margin:0 0 10px 0; font-weight:800; color:var(--sm-dark-color);">استطلاعات الرأي والبيانات</h2>';
+                        echo '<p style="color:#64748b; margin-bottom:30px; font-size:14px;">يرجى المشاركة في الاستطلاعات المتاحة لتحسين جودة الخدمات النقابية.</p>';
                         include SM_PLUGIN_DIR . 'templates/public-dashboard-summary.php';
+                        echo '</div>';
                     }
                     break;
 
@@ -1006,7 +1031,8 @@ $greeting = ($hour >= 5 && $hour < 12) ? 'صباح الخير' : 'مساء ال�
                         ?>
                         <div class="sm-tabs-wrapper" style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #eee; overflow-x: auto; white-space: nowrap; padding-bottom: 10px;">
                             <button class="sm-tab-btn <?php echo $sub == 'init' ? 'sm-active' : ''; ?>" onclick="smOpenInternalTab('syndicate-settings', this)">تهيئة النظام</button>
-                            <button class="sm-tab-btn <?php echo $sub == 'professional' ? 'sm-active' : ''; ?>" onclick="smOpenInternalTab('professional-settings', this)">الدرجات والتخصصات</button>
+                            <button class="sm-tab-btn <?php echo $sub == 'professional' ? 'sm-active' : ''; ?>" onclick="smOpenInternalTab('professional-settings', this)">الدرجات الوظيفية</button>
+                            <button class="sm-tab-btn <?php echo $sub == 'academic' ? 'sm-active' : ''; ?>" onclick="smOpenInternalTab('academic-settings', this)">الحقول الأكاديمية</button>
                             <button class="sm-tab-btn <?php echo $sub == 'finance' ? 'sm-active' : ''; ?>" onclick="smOpenInternalTab('finance-settings', this)">الرسوم والغرامات</button>
                             <button class="sm-tab-btn <?php echo $sub == 'notifications' ? 'sm-active' : ''; ?>" onclick="smOpenInternalTab('notification-settings', this)">التنبيهات والبريد</button>
                             <button class="sm-tab-btn <?php echo $sub == 'design' ? 'sm-active' : ''; ?>" onclick="smOpenInternalTab('design-settings', this)">التصميم والمظهر</button>
@@ -1081,7 +1107,7 @@ $greeting = ($hour >= 5 && $hour < 12) ? 'صباح الخير' : 'مساء ال�
                         <div id="professional-settings" class="sm-internal-tab" style="display: <?php echo ($sub == 'professional') ? 'block' : 'none'; ?>;">
                             <form method="post">
                                 <?php wp_nonce_field('sm_admin_action', 'sm_admin_nonce'); ?>
-                                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:30px;">
+                                <div style="display:grid; grid-template-columns: 1fr; gap:30px;">
                                     <div class="sm-form-group">
                                         <label class="sm-label">الدرجات الوظيفية (درجة واحدة في كل سطر):</label>
                                         <textarea name="professional_grades" class="sm-textarea" rows="8"><?php
@@ -1089,15 +1115,48 @@ $greeting = ($hour >= 5 && $hour < 12) ? 'صباح الخير' : 'مساء ال�
                                         ?></textarea>
                                         <p style="font-size:11px; color:#666; margin-top:5px;">التنسيق: key|Label (مثال: expert|خبير)</p>
                                     </div>
-                                    <div class="sm-form-group">
-                                        <label class="sm-label">التخصصات المهنية (تخصص واحد في كل سطر):</label>
-                                        <textarea name="specializations" class="sm-textarea" rows="8"><?php
-                                            foreach (SM_Settings::get_specializations() as $k => $v) echo "$k|$v\n";
-                                        ?></textarea>
-                                        <p style="font-size:11px; color:#666; margin-top:5px;">التنسيق: key|Label (مثال: massage|تدليك رياضي)</p>
-                                    </div>
                                 </div>
                                 <button type="submit" name="sm_save_professional_options" class="sm-btn" style="width:auto; margin-top:10px;">حفظ الخيارات المهنية</button>
+                            </form>
+                        </div>
+
+                        <div id="academic-settings" class="sm-internal-tab" style="display: <?php echo ($sub == 'academic') ? 'block' : 'none'; ?>;">
+                            <form method="post">
+                                <?php wp_nonce_field('sm_admin_action', 'sm_admin_nonce'); ?>
+                                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:30px;">
+                                    <div class="sm-form-group">
+                                        <label class="sm-label">قائمة الجامعات (جامعة واحدة في كل سطر):</label>
+                                        <textarea name="universities" class="sm-textarea" rows="10"><?php
+                                            foreach (SM_Settings::get_universities() as $k => $v) echo "$k|$v\n";
+                                        ?></textarea>
+                                        <p style="font-size:11px; color:#666; margin-top:5px;">التنسيق: key|Label</p>
+                                    </div>
+                                    <div class="sm-form-group">
+                                        <label class="sm-label">قائمة الكليات (كلية واحدة في كل سطر):</label>
+                                        <textarea name="faculties" class="sm-textarea" rows="10"><?php
+                                            foreach (SM_Settings::get_faculties() as $k => $v) echo "$k|$v\n";
+                                        ?></textarea>
+                                        <p style="font-size:11px; color:#666; margin-top:5px;">التنسيق: key|Label</p>
+                                    </div>
+                                    <div class="sm-form-group">
+                                        <label class="sm-label">قائمة الأقسام (قسم واحد في كل سطر):</label>
+                                        <textarea name="departments" class="sm-textarea" rows="10"><?php
+                                            foreach (SM_Settings::get_departments() as $k => $v) echo "$k|$v\n";
+                                        ?></textarea>
+                                        <p style="font-size:11px; color:#666; margin-top:5px;">التنسيق: key|Label</p>
+                                    </div>
+                                    <div class="sm-form-group">
+                                        <label class="sm-label">قائمة التخصصات (تخصص واحد في كل سطر):</label>
+                                        <textarea name="specializations" class="sm-textarea" rows="10"><?php
+                                            foreach (SM_Settings::get_specializations() as $k => $v) echo "$k|$v\n";
+                                        ?></textarea>
+                                        <p style="font-size:11px; color:#666; margin-top:5px;">التنسيق: key|Label</p>
+                                    </div>
+                                </div>
+                                <div style="margin-top: 20px; padding: 15px; background: #fffaf0; border: 1px solid #feebc8; border-radius: 8px; font-size: 13px; color: #744210;">
+                                    <strong>ملاحظة:</strong> سيتم استخدام هذه القوائم في نماذج التسجيل وتعديل البيانات بشكل تسلسلي (جامعة ← كلية ← قسم ← تخصص).
+                                </div>
+                                <button type="submit" name="sm_save_academic_options" class="sm-btn" style="width:auto; margin-top:20px; padding: 0 40px; height: 45px;">حفظ الحقول الأكاديمية</button>
                             </form>
                         </div>
 

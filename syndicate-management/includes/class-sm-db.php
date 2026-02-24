@@ -645,6 +645,55 @@ class SM_DB {
         ");
     }
 
+    public static function add_professional_request($member_id, $type) {
+        global $wpdb;
+        return $wpdb->insert("{$wpdb->prefix}sm_professional_requests", array(
+            'member_id' => intval($member_id),
+            'request_type' => $type,
+            'status' => 'pending',
+            'created_at' => current_time('mysql')
+        ));
+    }
+
+    public static function get_professional_requests($args = []) {
+        global $wpdb;
+        $query = "SELECT r.*, m.name as member_name, m.national_id, m.governorate
+                 FROM {$wpdb->prefix}sm_professional_requests r
+                 JOIN {$wpdb->prefix}sm_members m ON r.member_id = m.id WHERE 1=1";
+        $params = [];
+
+        if (!empty($args['status'])) {
+            $query .= " AND r.status = %s";
+            $params[] = $args['status'];
+        }
+        if (!empty($args['type'])) {
+            $query .= " AND r.request_type = %s";
+            $params[] = $args['type'];
+        }
+        if (!empty($args['governorate'])) {
+            $query .= " AND m.governorate = %s";
+            $params[] = $args['governorate'];
+        }
+
+        $query .= " ORDER BY r.created_at DESC";
+        if (!empty($params)) return $wpdb->get_results($wpdb->prepare($query, $params));
+        return $wpdb->get_results($query);
+    }
+
+    public static function process_professional_request($id, $status, $notes = '') {
+        global $wpdb;
+        return $wpdb->update(
+            "{$wpdb->prefix}sm_professional_requests",
+            array(
+                'status' => $status,
+                'admin_notes' => sanitize_textarea_field($notes),
+                'processed_at' => current_time('mysql'),
+                'processed_by' => get_current_user_id()
+            ),
+            array('id' => intval($id))
+        );
+    }
+
     public static function process_update_request($request_id, $status) {
         global $wpdb;
         $request = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}sm_update_requests WHERE id = %d", $request_id));

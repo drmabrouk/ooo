@@ -42,6 +42,13 @@ $registry = $wpdb->get_results($wpdb->prepare(
         <button onclick="smOpenFacilityModal()" class="sm-btn" style="width:auto;">+ تسجيل / تجديد منشأة</button>
     </div>
 
+    <div class="sm-tabs-wrapper" style="display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 2px solid #eee; padding-bottom: 10px;">
+        <button class="sm-tab-btn sm-active" onclick="smOpenInternalTab('facility-registry', this)">سجل المنشآت</button>
+        <button class="sm-tab-btn" onclick="smOpenInternalTab('facility-requests', this)">طلبات تراخيص المنشآت</button>
+    </div>
+
+    <div id="facility-registry" class="sm-internal-tab">
+
     <div class="sm-card-grid" style="margin-bottom: 30px;">
         <div class="sm-stat-card" style="border-right: 5px solid var(--sm-dark-color);">
             <div style="font-size: 0.85em; color: var(--sm-text-gray);">إجمالي المنشآت</div>

@@ -404,6 +404,22 @@ class SM_Activator {
             KEY user_id (user_id)
         ) $charset_collate;\n";
 
+        // Professional Workflow Requests Table
+        $table_name = $wpdb->prefix . 'sm_professional_requests';
+        $sql .= "CREATE TABLE $table_name (
+            id mediumint(9) NOT NULL AUTO_INCREMENT,
+            member_id mediumint(9) NOT NULL,
+            request_type enum('permit_test', 'permit_renewal', 'facility_new', 'facility_renewal') NOT NULL,
+            status enum('pending', 'approved', 'rejected') DEFAULT 'pending',
+            admin_notes text,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
+            processed_at datetime,
+            processed_by bigint(20),
+            PRIMARY KEY  (id),
+            KEY member_id (member_id),
+            KEY status (status)
+        ) $charset_collate;\n";
+
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';
         dbDelta($sql);
 
@@ -412,6 +428,54 @@ class SM_Activator {
         self::setup_roles();
         self::seed_notification_templates();
         self::seed_publishing_templates();
+        self::seed_academic_fields();
+    }
+
+    private static function seed_academic_fields() {
+        if (!get_option('sm_universities')) {
+            SM_Settings::save_universities(array(
+                'cairo' => 'جامعة القاهرة', 'alexandria' => 'جامعة الإسكندرية', 'mansoura' => 'جامعة المنصورة', 'tanta' => 'جامعة طنطا',
+                'ain_shams' => 'جامعة عين شمس', 'asyut' => 'جامعة أسيوط', 'zagazig' => 'جامعة الزقازيق', 'capital' => 'جامعة العاصمة',
+                'minya' => 'جامعة المنيا', 'menofia' => 'جامعة المنوفية', 'suez_canal' => 'جامعة قناة السويس', 'qena' => 'جامعة قنا',
+                'beni_suef' => 'جامعة بني سويف', 'fayoum' => 'جامعة الفيوم', 'banha' => 'جامعة بنها', 'kafr_el_sheikh' => 'جامعة كفر الشيخ',
+                'sohag' => 'جامعة سوهاج', 'port_said' => 'جامعة بورسعيد', 'aswan' => 'جامعة أسوان', 'damietta' => 'جامعة دمياط',
+                'damanhour' => 'جامعة دمنهور', 'suez' => 'جامعة السويس', 'sadat' => 'جامعة مدينة السادات', 'arish' => 'جامعة العريش',
+                'luxor' => 'جامعة الأقصر', 'new_valley' => 'جامعة الوادي الجديد', 'matrouh' => 'جامعة مطروح', 'hurghada' => 'جامعة الغردقة'
+            ));
+        }
+
+        if (!get_option('sm_faculties')) {
+            SM_Settings::save_faculties(array(
+                'sports_science' => 'كلية علوم الرياضة',
+                'physical_edu' => 'كلية التربية الرياضية',
+                'rehab_sports' => 'كلية علوم الرياضة والتأهيل',
+                'physical_sports' => 'كلية التربية البدنية وعلوم الرياضة',
+                'disability_rehab' => 'كلية علوم الإعاقة والتأهيل'
+            ));
+        }
+
+        if (!get_option('sm_departments')) {
+            SM_Settings::save_departments(array(
+                'health_science' => 'قسم علوم الصحة الرياضية', 'psychology' => 'قسم علم النفس الرياضي', 'health' => 'قسم الصحة الرياضية',
+                'physiology' => 'قسم فيسيولوجيا الرياضة', 'kinesiology' => 'قسم علوم الحركة الرياضية', 'nutrition' => 'قسم التغذية الرياضية',
+                'training' => 'قسم التدريب الرياضي وعلومه', 'tarweeh' => 'قسم الترويح الرياضي', 'performance' => 'قسم اللياقة البدنية وعلوم الأداء',
+                'health_bioscience' => 'قسم العلوم الحيوية والصحة الرياضية', 'curriculum' => 'قسم المناهج وطرق التدريس', 'admin' => 'قسم الإدارة الرياضية',
+                'therapy' => 'قسم العلاج الرياضي', 'injuries' => 'قسم الإصابات والتأهيل'
+            ));
+        }
+
+        if (!get_option('sm_specializations')) {
+            SM_Settings::save_specializations(array(
+                'fisiologia' => 'فيسيولوجيا الرياضة', 'tarweeh' => 'الترويح الرياضي', 'aquatic' => 'الرياضات المائية', 'team_sports' => 'الألعاب الجماعية',
+                'combat' => 'المنازلات', 'sports_injuries' => 'الإصابات الرياضية والتأهيل', 'sports_therapy' => 'العلاج الرياضي', 'sports_nutrition' => 'التغذية الرياضية',
+                'biomechanics' => 'الميكانيكا الحيوية', 'rehab_fisiologia' => 'فيسيولوجيا التأهيل', 'teaching_methods' => 'طرق تدريس التربية الرياضية', 'sports_psychology' => 'علم النفس الرياضي',
+                'measurement' => 'القياس والتقويم الرياضي', 'kinesiology' => 'علم الحركة', 'sports_health' => 'الصحة الرياضية', 'injuries_rehab' => 'الإصابات والتأهيل',
+                'physical_prep' => 'الإعداد البدني', 'sports_media' => 'الإعلام الرياضي', 'fitness' => 'اللياقة البدنية', 'sports_training_spec' => 'تدريب رياضي تخصص',
+                'gymnastics' => 'الجمباز والتعبير الحركي', 'admin_tarweeh' => 'الإدارة والترويح', 'motor_rehab' => 'الإصابات والتأهيل الحركي', 'health_science' => 'علوم الصحة الرياضية',
+                'bioscience' => 'العلوم الحيوية', 'health_bioscience' => 'العلوم الحيوية والصحة الرياضية', 'sports_training' => 'تدريب رياضي', 'motor_science' => 'علم حركة',
+                'health_fitness' => 'اللياقة البدنية والصحية', 'sports_edu' => 'التعليم الرياضي', 'physical_activity' => 'النشاط البدني'
+            ));
+        }
     }
 
     private static function seed_publishing_templates() {
